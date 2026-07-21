@@ -75,19 +75,20 @@ native architecture. Choose the asset that matches the PC:
 
 | Windows system type | Release asset |
 | --- | --- |
+| 32-bit Intel or AMD Windows | `LegacyEdge-x86-DeveloperInstall.zip` |
 | 64-bit Intel or AMD processor | `LegacyEdge-x64-DeveloperInstall.zip` |
 | Windows on ARM with an ARM64 processor | `LegacyEdge-ARM64-DeveloperInstall.zip` |
 
 If the matching asset is not yet listed on the
 [Releases page](https://github.com/Generalkidd/LegacyEdge/releases), build and
-stage it from source using the instructions below. x86 and 32-bit ARM are also
-configured source targets, but should be published only after testing on
+stage it from source using the instructions below. 32-bit ARM is also a
+configured source target, but should be published only after testing on
 matching hardware.
 
 1. Enable Developer Mode:
    - Windows 11: **Settings > System > For developers > Developer Mode**
    - Windows 10: **Settings > Update & Security > For developers**
-2. Download the matching x64 or ARM64 developer-install ZIP.
+2. Download the matching x86, x64, or ARM64 developer-install ZIP.
 3. Extract the **entire ZIP** to a normal, permanent local folder. Do not run
    the installer from File Explorer's compressed-folder view.
 4. Close Legacy Edge if it is already running, then double-click `Install.cmd`.
@@ -185,7 +186,7 @@ is disabled in the project, so the resulting MSIX is unsigned.
 
 | Platform | Debug | Release | Current validation |
 | --- | :---: | :---: | --- |
-| x86 | Yes | Yes | Configured; requires matching test hardware |
+| x86 | Yes | Yes | Release build and developer bundle verified; installation requires matching 32-bit test hardware |
 | x64 | Yes | Yes | Release build and developer bundle verified |
 | ARM | Yes | Yes | Configured; requires matching test hardware |
 | ARM64 | Yes | Yes | Release build, developer bundle, install, and launch verified |
