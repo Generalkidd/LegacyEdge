@@ -1,0 +1,189 @@
+<Application x:Class="LegacyEdge.App" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Application.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Light">
+          <SolidColorBrush x:Key="EdgeTitleBarBrush" Color="#CCCCCC" />
+          <SolidColorBrush x:Key="EdgeActiveTabBrush" Color="#F2F2F2" />
+          <SolidColorBrush x:Key="EdgeToolbarBrush" Color="#F2F2F2" />
+          <SolidColorBrush x:Key="EdgeHoverBrush" Color="#E1E1E1" />
+          <SolidColorBrush x:Key="EdgePressedBrush" Color="#D4D4D4" />
+          <SolidColorBrush x:Key="EdgeBorderBrush" Color="#B7B7B7" />
+          <SolidColorBrush x:Key="EdgeTextBrush" Color="#1B1B1B" />
+          <SolidColorBrush x:Key="EdgeSecondaryTextBrush" Color="#666666" />
+          <SolidColorBrush x:Key="EdgeTertiaryTextBrush" Color="#777777" />
+          <SolidColorBrush x:Key="EdgeSurfaceBrush" Color="#FAFAFA" />
+          <SolidColorBrush x:Key="EdgeSubtleSurfaceBrush" Color="#F2F2F2" />
+          <SolidColorBrush x:Key="EdgeElevatedSurfaceBrush" Color="#FFFFFF" />
+          <SolidColorBrush x:Key="EdgeAddressBackgroundBrush" Color="#FFFFFF" />
+          <SolidColorBrush x:Key="EdgeAddressBorderBrush" Color="#CCCCCC" />
+          <SolidColorBrush x:Key="EdgeDividerBrush" Color="#D2D2D2" />
+          <SolidColorBrush x:Key="EdgeToolbarDividerBrush" Color="#CCCCCC" />
+          <SolidColorBrush x:Key="EdgePanelBorderBrush" Color="#A6A6A6" />
+          <SolidColorBrush x:Key="EdgeSupportBackgroundBrush" Color="#F7F7F7" />
+          <SolidColorBrush x:Key="EdgeStatusBackgroundBrush" Color="#EAF4FC" />
+          <SolidColorBrush x:Key="EdgeStatusBorderBrush" Color="#8CBAD9" />
+          <SolidColorBrush x:Key="EdgePreviewBackgroundBrush" Color="#D0D0D0" />
+          <SolidColorBrush x:Key="EdgePreviewCardBrush" Color="#F8F8F8" />
+          <SolidColorBrush x:Key="EdgePreviewSelectedBrush" Color="#EEF6FC" />
+          <AcrylicBrush x:Key="EdgeRailBrush" BackgroundSource="HostBackdrop" TintColor="#E7E7E7" TintOpacity="0.88" FallbackColor="#E7E7E7" />
+          <!-- Override the system scrollbar palette so app-owned scrollers follow
+               Edge's selected theme instead of retaining the Windows dark colors. -->
+          <Color x:Key="ScrollBarThumbBackgroundColor">#9A9A9A</Color>
+          <Color x:Key="ScrollBarPanningThumbBackgroundColor">#A6A6A6</Color>
+          <SolidColorBrush x:Key="ScrollBarThumbBackground" Color="#9A9A9A" />
+          <SolidColorBrush x:Key="ScrollBarPanningThumbBackground" Color="#A6A6A6" />
+          <SolidColorBrush x:Key="ScrollBarThumbFill" Color="#A6A6A6" />
+          <SolidColorBrush x:Key="ScrollBarThumbFillPointerOver" Color="#858585" />
+          <SolidColorBrush x:Key="ScrollBarThumbFillPressed" Color="#6B6B6B" />
+          <SolidColorBrush x:Key="ScrollBarTrackFill" Color="#F3F3F3" />
+          <SolidColorBrush x:Key="ScrollBarTrackFillPointerOver" Color="#EBEBEB" />
+          <SolidColorBrush x:Key="ScrollViewerScrollBarSeparatorBackground" Color="#F3F3F3" />
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="Dark">
+          <SolidColorBrush x:Key="EdgeTitleBarBrush" Color="#1F1F1F" />
+          <SolidColorBrush x:Key="EdgeActiveTabBrush" Color="#171717" />
+          <SolidColorBrush x:Key="EdgeToolbarBrush" Color="#171717" />
+          <SolidColorBrush x:Key="EdgeHoverBrush" Color="#333333" />
+          <SolidColorBrush x:Key="EdgePressedBrush" Color="#4C4C4C" />
+          <SolidColorBrush x:Key="EdgeBorderBrush" Color="#575757" />
+          <SolidColorBrush x:Key="EdgeTextBrush" Color="#FFFFFF" />
+          <SolidColorBrush x:Key="EdgeSecondaryTextBrush" Color="#C0C0C0" />
+          <SolidColorBrush x:Key="EdgeTertiaryTextBrush" Color="#8F8F8F" />
+          <SolidColorBrush x:Key="EdgeSurfaceBrush" Color="#1F1F1F" />
+          <SolidColorBrush x:Key="EdgeSubtleSurfaceBrush" Color="#282828" />
+          <SolidColorBrush x:Key="EdgeElevatedSurfaceBrush" Color="#171717" />
+          <SolidColorBrush x:Key="EdgeAddressBackgroundBrush" Color="#373737" />
+          <SolidColorBrush x:Key="EdgeAddressBorderBrush" Color="#595959" />
+          <SolidColorBrush x:Key="EdgeDividerBrush" Color="#575757" />
+          <SolidColorBrush x:Key="EdgeToolbarDividerBrush" Color="#080808" />
+          <SolidColorBrush x:Key="EdgePanelBorderBrush" Color="#575757" />
+          <SolidColorBrush x:Key="EdgeSupportBackgroundBrush" Color="#1F1F1F" />
+          <SolidColorBrush x:Key="EdgeStatusBackgroundBrush" Color="#17364D" />
+          <SolidColorBrush x:Key="EdgeStatusBorderBrush" Color="#3C7398" />
+          <SolidColorBrush x:Key="EdgePreviewBackgroundBrush" Color="#1F1F1F" />
+          <SolidColorBrush x:Key="EdgePreviewCardBrush" Color="#171717" />
+          <SolidColorBrush x:Key="EdgePreviewSelectedBrush" Color="#243746" />
+          <AcrylicBrush x:Key="EdgeRailBrush" BackgroundSource="HostBackdrop" TintColor="#202020" TintOpacity="0.74" FallbackColor="#333333" />
+          <Color x:Key="ScrollBarThumbBackgroundColor">#858585</Color>
+          <Color x:Key="ScrollBarPanningThumbBackgroundColor">#727272</Color>
+          <SolidColorBrush x:Key="ScrollBarThumbBackground" Color="#858585" />
+          <SolidColorBrush x:Key="ScrollBarPanningThumbBackground" Color="#727272" />
+          <SolidColorBrush x:Key="ScrollBarThumbFill" Color="#727272" />
+          <SolidColorBrush x:Key="ScrollBarThumbFillPointerOver" Color="#929292" />
+          <SolidColorBrush x:Key="ScrollBarThumbFillPressed" Color="#AAAAAA" />
+          <SolidColorBrush x:Key="ScrollBarTrackFill" Color="#252525" />
+          <SolidColorBrush x:Key="ScrollBarTrackFillPointerOver" Color="#303030" />
+          <SolidColorBrush x:Key="ScrollViewerScrollBarSeparatorBackground" Color="#252525" />
+        </ResourceDictionary>
+      </ResourceDictionary.ThemeDictionaries>
+      <SolidColorBrush x:Key="EdgeBlueBrush" Color="#0078D7" />
+    <Style TargetType="TextBlock">
+      <Setter Property="FontFamily" Value="Segoe UI" />
+      <Setter Property="Foreground" Value="{ThemeResource EdgeTextBrush}" />
+    </Style>
+    <Style x:Key="ChromeButtonStyle" TargetType="Button">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Foreground" Value="{ThemeResource EdgeTextBrush}" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
+      <Setter Property="FontSize" Value="20" />
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="VerticalAlignment" Value="Stretch" />
+      <Setter Property="HorizontalContentAlignment" Value="Center" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+      <Setter Property="MinWidth" Value="0" />
+      <Setter Property="MinHeight" Value="0" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border x:Name="ChromeRoot"
+                    Background="{TemplateBinding Background}"
+                    BorderBrush="{TemplateBinding BorderBrush}"
+                    BorderThickness="{TemplateBinding BorderThickness}">
+              <VisualStateManager.VisualStateGroups>
+                <VisualStateGroup x:Name="CommonStates">
+                  <VisualState x:Name="Normal" />
+                  <VisualState x:Name="PointerOver">
+                    <Storyboard>
+                      <ObjectAnimationUsingKeyFrames Storyboard.TargetName="ChromeRoot" Storyboard.TargetProperty="Background">
+                        <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource EdgeHoverBrush}" />
+                      </ObjectAnimationUsingKeyFrames>
+                    </Storyboard>
+                  </VisualState>
+                  <VisualState x:Name="Pressed">
+                    <Storyboard>
+                      <ObjectAnimationUsingKeyFrames Storyboard.TargetName="ChromeRoot" Storyboard.TargetProperty="Background">
+                        <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource EdgePressedBrush}" />
+                      </ObjectAnimationUsingKeyFrames>
+                    </Storyboard>
+                  </VisualState>
+                  <VisualState x:Name="Disabled">
+                    <Storyboard>
+                      <DoubleAnimation Storyboard.TargetName="ChromeRoot" Storyboard.TargetProperty="Opacity" To="0.28" Duration="0" />
+                    </Storyboard>
+                  </VisualState>
+                </VisualStateGroup>
+              </VisualStateManager.VisualStateGroups>
+              <ContentPresenter Content="{TemplateBinding Content}"
+                                ContentTemplate="{TemplateBinding ContentTemplate}"
+                                HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+            </Border>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style x:Key="MenuRowStyle" TargetType="Button">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Foreground" Value="{ThemeResource EdgeTextBrush}" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+      <Setter Property="Height" Value="44" />
+      <Setter Property="Padding" Value="14,0" />
+      <Setter Property="FontFamily" Value="Segoe UI" />
+      <Setter Property="FontSize" Value="14" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Grid x:Name="MenuRoot" Background="{TemplateBinding Background}">
+              <VisualStateManager.VisualStateGroups>
+                <VisualStateGroup x:Name="CommonStates">
+                  <VisualState x:Name="Normal" />
+                  <VisualState x:Name="PointerOver">
+                    <Storyboard>
+                      <ObjectAnimationUsingKeyFrames Storyboard.TargetName="MenuRoot" Storyboard.TargetProperty="Background">
+                        <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource EdgeHoverBrush}" />
+                      </ObjectAnimationUsingKeyFrames>
+                    </Storyboard>
+                  </VisualState>
+                  <VisualState x:Name="Pressed">
+                    <Storyboard>
+                      <ObjectAnimationUsingKeyFrames Storyboard.TargetName="MenuRoot" Storyboard.TargetProperty="Background">
+                        <DiscreteObjectKeyFrame KeyTime="0" Value="{ThemeResource EdgePressedBrush}" />
+                      </ObjectAnimationUsingKeyFrames>
+                    </Storyboard>
+                  </VisualState>
+                  <VisualState x:Name="Disabled">
+                    <Storyboard>
+                      <DoubleAnimation Storyboard.TargetName="MenuRoot" Storyboard.TargetProperty="Opacity" To="0.35" Duration="0" />
+                    </Storyboard>
+                  </VisualState>
+                </VisualStateGroup>
+              </VisualStateManager.VisualStateGroups>
+              <ContentPresenter Content="{TemplateBinding Content}"
+                                ContentTemplate="{TemplateBinding ContentTemplate}"
+                                Margin="{TemplateBinding Padding}"
+                                HorizontalAlignment="Stretch"
+                                HorizontalContentAlignment="Stretch"
+                                VerticalContentAlignment="Center" />
+            </Grid>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    </ResourceDictionary>
+  </Application.Resources>
+</Application>

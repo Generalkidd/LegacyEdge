@@ -1,0 +1,871 @@
+<Page
+    x:Class="LegacyEdge.MainPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="{ThemeResource EdgeElevatedSurfaceBrush}"
+    Loaded="Page_Loaded"
+    Unloaded="Page_Unloaded"
+    SizeChanged="Page_SizeChanged">
+
+  <Page.Resources>
+    <Style x:Key="HubTabStyle" TargetType="Button" BasedOn="{StaticResource ChromeButtonStyle}">
+      <Setter Property="Height" Value="52" />
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="FontSize" Value="20" />
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+      <Setter Property="VerticalContentAlignment" Value="Stretch" />
+    </Style>
+    <Style x:Key="LegacyFlyoutPresenterStyle" TargetType="FlyoutPresenter">
+      <Setter Property="Background" Value="{ThemeResource EdgeSurfaceBrush}" />
+      <Setter Property="Foreground" Value="{ThemeResource EdgeTextBrush}" />
+      <Setter Property="BorderBrush" Value="{ThemeResource EdgePanelBorderBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="Padding" Value="0" />
+    </Style>
+    <Style x:Key="SettingsNavigationButtonStyle" TargetType="Button" BasedOn="{StaticResource MenuRowStyle}">
+      <Setter Property="Height" Value="Auto" />
+      <Setter Property="MinHeight" Value="52" />
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="FontSize" Value="15" />
+    </Style>
+    <Style x:Key="SettingsSectionHeaderStyle" TargetType="TextBlock">
+      <Setter Property="FontFamily" Value="Segoe UI Semibold" />
+      <Setter Property="FontSize" Value="18" />
+      <Setter Property="Margin" Value="0,22,0,8" />
+    </Style>
+    <Style x:Key="SettingsLabelStyle" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="15" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+      <Setter Property="Margin" Value="0,9,0,6" />
+    </Style>
+    <Style x:Key="SettingsDescriptionStyle" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="Foreground" Value="{ThemeResource EdgeSecondaryTextBrush}" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+    </Style>
+    <Style x:Key="PageContextMenuPresenterStyle" TargetType="MenuFlyoutPresenter">
+      <Setter Property="MinWidth" Value="260" />
+      <Setter Property="Background" Value="{ThemeResource EdgeSurfaceBrush}" />
+      <Setter Property="BorderBrush" Value="{ThemeResource EdgePanelBorderBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="Padding" Value="0,5" />
+    </Style>
+    <Style x:Key="PageContextMenuItemStyle" TargetType="MenuFlyoutItem">
+      <Setter Property="Height" Value="38" />
+      <Setter Property="Padding" Value="16,0" />
+      <Setter Property="FontFamily" Value="Segoe UI" />
+      <Setter Property="FontSize" Value="14" />
+      <Setter Property="Foreground" Value="{ThemeResource EdgeTextBrush}" />
+    </Style>
+    <Style x:Key="MoreMenuIconStyle" TargetType="FontIcon">
+      <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
+      <Setter Property="FontSize" Value="16" />
+      <Setter Property="Width" Value="24" />
+      <Setter Property="HorizontalAlignment" Value="Left" />
+      <Setter Property="Foreground" Value="{ThemeResource EdgeSecondaryTextBrush}" />
+    </Style>
+  </Page.Resources>
+
+    <Grid x:Name="LayoutRoot" Background="{ThemeResource EdgeElevatedSurfaceBrush}">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="53" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+      <RowDefinition Height="Auto" />
+    </Grid.RowDefinitions>
+
+    <!-- Holds prepared print visuals behind the browser UI while PrintDocument owns them. -->
+    <Canvas x:Name="PrintCanvas" Grid.RowSpan="7" Canvas.ZIndex="-100" Width="0" Height="0" IsHitTestVisible="False" />
+
+    <!-- Final EdgeHTML Edge title strip with tab-set-aside controls and square tabs. -->
+    <Grid x:Name="TitleBar" Grid.Row="0" Background="{ThemeResource EdgeTitleBarBrush}">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="40" />
+        <RowDefinition Height="Auto" />
+      </Grid.RowDefinitions>
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition x:Name="CaptionButtonsColumn" Width="138" />
+      </Grid.ColumnDefinitions>
+      <Grid Grid.Row="0" Grid.Column="0">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition x:Name="TitleSetAsideColumn" Width="80" />
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="40" />
+          <ColumnDefinition Width="40" />
+          <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <StackPanel x:Name="SetAsideControls" Grid.Column="0" Orientation="Horizontal">
+          <Button Width="40" Height="40" Style="{StaticResource ChromeButtonStyle}" ToolTipService.ToolTip="Tabs you've set aside" AutomationProperties.Name="Tabs you've set aside" Click="ShowSetAsideTabs_Click">
+            <Viewbox Width="18" Height="18">
+              <Canvas Width="18" Height="18">
+                <Rectangle Canvas.Left="4" Canvas.Top="5" Width="12" Height="10" Stroke="{ThemeResource EdgeTextBrush}" StrokeThickness="1.4" />
+                <Path Data="M2,13 L2,3 L14,3" Stroke="{ThemeResource EdgeTextBrush}" StrokeThickness="1.4" />
+                <Path Data="M2,3 L4,5" Stroke="{ThemeResource EdgeTextBrush}" StrokeThickness="1.4" />
+              </Canvas>
+            </Viewbox>
+          </Button>
+          <Button Width="40" Height="40" Style="{StaticResource ChromeButtonStyle}" ToolTipService.ToolTip="Set these tabs aside" AutomationProperties.Name="Set these tabs aside" Click="SetTabsAside_Click">
+            <Viewbox Width="18" Height="18">
+              <Canvas Width="18" Height="18">
+                <Rectangle Canvas.Left="7" Canvas.Top="3" Width="9" Height="12" Stroke="{ThemeResource EdgeTextBrush}" StrokeThickness="1.4" />
+                <Path Data="M1,9 L12,9 M1,9 L5,5 M1,9 L5,13" Stroke="{ThemeResource EdgeTextBrush}" StrokeThickness="1.4" />
+              </Canvas>
+            </Viewbox>
+          </Button>
+        </StackPanel>
+        <ScrollViewer x:Name="TabsScroller" Grid.Column="1" Height="40" HorizontalAlignment="Left" HorizontalScrollMode="Enabled" HorizontalScrollBarVisibility="Hidden" VerticalScrollMode="Disabled" VerticalScrollBarVisibility="Disabled" ViewChanged="TabsScroller_ViewChanged">
+          <StackPanel x:Name="TabsPanel" Orientation="Horizontal" />
+        </ScrollViewer>
+        <Button x:Name="NewTabButton" Grid.Column="2" Width="40" Height="40" Content="&#xE710;" Style="{StaticResource ChromeButtonStyle}" FontSize="17" ToolTipService.ToolTip="New tab (Ctrl+T)" AutomationProperties.Name="New tab" Click="NewTab_Click" />
+        <Button x:Name="TabPreviewToggleButton" Grid.Column="3" Width="40" Height="40" Content="&#xE70D;" Style="{StaticResource ChromeButtonStyle}" FontSize="14" ToolTipService.ToolTip="Show tab previews" AutomationProperties.AutomationId="TabPreviewToggleButton" AutomationProperties.Name="Show tab previews" Click="ShowTabs_Click" />
+        <Grid x:Name="TitleBarDragRegion" Grid.Column="4" Background="Transparent" />
+      </Grid>
+
+      <Border x:Name="TabPreviewBar" Grid.Row="1" Grid.ColumnSpan="2" Height="138" Background="{ThemeResource EdgePreviewBackgroundBrush}" BorderBrush="{ThemeResource EdgeBorderBrush}" BorderThickness="0,1,0,1" Visibility="Collapsed">
+        <Grid>
+          <ScrollViewer x:Name="TabPreviewScroller" HorizontalScrollMode="Enabled" HorizontalScrollBarVisibility="Hidden" VerticalScrollMode="Disabled" VerticalScrollBarVisibility="Disabled" Margin="80,8,8,8">
+            <StackPanel x:Name="TabPreviewPanel" Orientation="Horizontal" />
+          </ScrollViewer>
+          <TextBlock x:Name="TabPreviewEmptyText" Text="No tabs are open" FontSize="14" Foreground="{ThemeResource EdgeSecondaryTextBrush}" Margin="98,0,0,0" VerticalAlignment="Center" Visibility="Collapsed" />
+        </Grid>
+      </Border>
+    </Grid>
+
+    <!-- Navigation toolbar. -->
+    <Grid x:Name="MainToolbar" Grid.Row="1" Background="{ThemeResource EdgeToolbarBrush}" BorderBrush="{ThemeResource EdgeToolbarDividerBrush}" BorderThickness="0,0,0,1">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="2" />
+        <ColumnDefinition Width="48" />
+        <ColumnDefinition Width="48" />
+        <ColumnDefinition Width="48" />
+        <ColumnDefinition x:Name="HomeButtonColumn" Width="48" />
+        <ColumnDefinition x:Name="ToolbarSpacerColumn" Width="0" />
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition x:Name="HubButtonColumn" Width="48" />
+        <ColumnDefinition x:Name="WebNoteButtonColumn" Width="48" />
+        <ColumnDefinition x:Name="ShareButtonColumn" Width="48" />
+        <ColumnDefinition Width="48" />
+      </Grid.ColumnDefinitions>
+
+      <Button x:Name="BackButton" Grid.Column="1" Content="&#xE72B;" Style="{StaticResource ChromeButtonStyle}" ToolTipService.ToolTip="Back (Alt+Left)" AutomationProperties.Name="Back" Click="Back_Click" />
+      <Button x:Name="ForwardButton" Grid.Column="2" Content="&#xE72A;" Style="{StaticResource ChromeButtonStyle}" ToolTipService.ToolTip="Forward (Alt+Right)" AutomationProperties.Name="Forward" Click="Forward_Click" />
+      <Button x:Name="RefreshButton" Grid.Column="3" Content="&#xE72C;" Style="{StaticResource ChromeButtonStyle}" ToolTipService.ToolTip="Refresh (Ctrl+R)" AutomationProperties.Name="Refresh" Click="Refresh_Click" />
+      <Button x:Name="HomeButton" Grid.Column="4" Content="&#xE80F;" Style="{StaticResource ChromeButtonStyle}" ToolTipService.ToolTip="Home (Alt+Home)" AutomationProperties.Name="Home" Click="Home_Click" />
+
+      <Grid x:Name="AddressBarHost" Grid.Column="6" Margin="2,6,8,6" Background="{ThemeResource EdgeAddressBackgroundBrush}" BorderBrush="{ThemeResource EdgeAddressBorderBrush}" BorderThickness="1" SizeChanged="AddressBarHost_SizeChanged">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="56" />
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="40" />
+          <ColumnDefinition Width="40" />
+        </Grid.ColumnDefinitions>
+        <Button x:Name="SecurityButton" Grid.Column="0" Content="&#xE72E;" Foreground="{ThemeResource EdgeSecondaryTextBrush}" BorderBrush="{ThemeResource EdgeDividerBrush}" BorderThickness="0,0,1,0" Style="{StaticResource ChromeButtonStyle}" FontSize="17" ToolTipService.ToolTip="Site information" AutomationProperties.AutomationId="SecurityButton" AutomationProperties.Name="Site information">
+          <Button.Flyout>
+            <Flyout x:Name="SecurityFlyout" Placement="BottomEdgeAlignedLeft" Opening="SecurityFlyout_Opening" FlyoutPresenterStyle="{StaticResource LegacyFlyoutPresenterStyle}">
+              <Border Width="360" Background="{ThemeResource EdgeElevatedSurfaceBrush}">
+                <StackPanel>
+                  <Border Background="{ThemeResource EdgeSubtleSurfaceBrush}" Padding="18,16,18,14" BorderBrush="{ThemeResource EdgeDividerBrush}" BorderThickness="0,0,0,1">
+                    <StackPanel>
+                      <StackPanel Orientation="Horizontal">
+                        <FontIcon x:Name="SecurityFlyoutIcon" Glyph="&#xE72E;" FontFamily="Segoe MDL2 Assets" FontSize="19" Foreground="#007855" Margin="0,0,12,0" />
+                        <TextBlock x:Name="SecurityFlyoutHeading" Text="Connection is secure" FontFamily="Segoe UI Semibold" FontSize="18" Foreground="{ThemeResource EdgeTextBrush}" VerticalAlignment="Center" />
+                      </StackPanel>
+                      <TextBlock x:Name="SecurityFlyoutHost" Margin="31,7,0,0" FontSize="14" Foreground="{ThemeResource EdgeSecondaryTextBrush}" TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                  </Border>
+                  <StackPanel Padding="18,16,18,18">
+                    <TextBlock x:Name="SecurityFlyoutDetail" FontSize="14" Foreground="{ThemeResource EdgeTextBrush}" TextWrapping="Wrap" />
+                    <TextBlock x:Name="SecurityFlyoutProtocol" Margin="0,14,0,0" FontSize="12" Foreground="{ThemeResource EdgeSecondaryTextBrush}" TextWrapping="Wrap" />
+                  </StackPanel>
+                </StackPanel>
+              </Border>
+            </Flyout>
+          </Button.Flyout>
+        </Button>
+        <TextBox x:Name="AddressBox" Grid.Column="1" BorderThickness="0" Background="Transparent" Foreground="{ThemeResource EdgeTextBrush}" FontFamily="Segoe UI" FontSize="15" Padding="10,7,4,7" VerticalContentAlignment="Center" PlaceholderText="Search or enter web address" IsTextPredictionEnabled="False" IsSpellCheckEnabled="False" KeyDown="AddressBox_KeyDown" TextChanged="AddressBox_TextChanged" GotFocus="AddressBox_GotFocus" LostFocus="AddressBox_LostFocus" AutomationProperties.AutomationId="AddressBox" AutomationProperties.Name="Search or enter web address" />
+        <Button x:Name="ReadingViewButton" Grid.Column="2" Content="&#xE736;" Style="{StaticResource ChromeButtonStyle}" FontSize="18" ToolTipService.ToolTip="Reading view (Ctrl+Shift+R)" AutomationProperties.Name="Reading view" Click="ReadingView_Click" />
+        <Button x:Name="FavoriteButton" Grid.Column="3" Content="&#xE734;" Style="{StaticResource ChromeButtonStyle}" FontSize="21" ToolTipService.ToolTip="Add to favorites or reading list (Ctrl+D)" AutomationProperties.AutomationId="FavoriteButton" AutomationProperties.Name="Add to favorites or reading list">
+          <Button.Flyout>
+            <Flyout x:Name="FavoriteFlyout" Placement="BottomEdgeAlignedRight" Opening="FavoriteFlyout_Opening" FlyoutPresenterStyle="{StaticResource LegacyFlyoutPresenterStyle}">
+              <Border Width="370" Background="{ThemeResource EdgeElevatedSurfaceBrush}">
+                <StackPanel>
+                  <Border Background="{ThemeResource EdgeSubtleSurfaceBrush}" Padding="18,15" BorderBrush="{ThemeResource EdgeDividerBrush}" BorderThickness="0,0,0,1">
+                    <StackPanel Orientation="Horizontal">
+                      <FontIcon Glyph="&#xE734;" FontFamily="Segoe MDL2 Assets" FontSize="20" Foreground="#0078D7" Margin="0,0,12,0" />
+                      <TextBlock x:Name="FavoriteFlyoutHeading" Text="Save this page" FontFamily="Segoe UI Semibold" FontSize="18" Foreground="{ThemeResource EdgeTextBrush}" VerticalAlignment="Center" />
+                    </StackPanel>
+                  </Border>
+                  <StackPanel Padding="18,16,18,18">
+                    <TextBlock Text="Name" FontSize="12" Foreground="{ThemeResource EdgeSecondaryTextBrush}" Margin="0,0,0,5" />
+                    <TextBox x:Name="FavoriteNameBox" Height="34" FontSize="14" BorderBrush="{ThemeResource EdgeBorderBrush}" BorderThickness="1" Padding="8,3" />
+                    <TextBlock Text="Save in" FontSize="12" Foreground="{ThemeResource EdgeSecondaryTextBrush}" Margin="0,13,0,5" />
+                    <ComboBox x:Name="FavoriteLocationBox" Height="34" SelectedIndex="0" HorizontalAlignment="Stretch">
+                      <ComboBoxItem Content="Favorites" Tag="Favorites" />
+                      <ComboBoxItem Content="Favorites bar" Tag="FavoritesBar" />
+                    </ComboBox>
+                    <Grid Margin="0,18,0,0">
+                      <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                      </Grid.RowDefinitions>
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                      </Grid.ColumnDefinitions>
+                      <Button x:Name="FavoriteReadingListButton" Grid.Row="0" Grid.ColumnSpan="4" Content="Add to reading list" Background="Transparent" BorderThickness="0" Foreground="{StaticResource EdgeBlueBrush}" Padding="0,7" HorizontalAlignment="Left" Click="ToggleReadingList_Click" />
+                      <Button x:Name="FavoriteRemoveButton" Grid.Row="1" Grid.Column="1" Content="Remove" MinWidth="76" Margin="0,10,8,0" Visibility="Collapsed" Click="RemoveFavorite_Click" />
+                      <Button Grid.Row="1" Grid.Column="2" Content="Cancel" MinWidth="76" Margin="0,10,8,0" Click="CloseFavoriteFlyout_Click" />
+                      <Button x:Name="FavoritePrimaryButton" Grid.Row="1" Grid.Column="3" Content="Add" MinWidth="82" Margin="0,10,0,0" Background="#0078D7" Foreground="White" Click="SaveFavorite_Click" />
+                    </Grid>
+                  </StackPanel>
+                </StackPanel>
+              </Border>
+            </Flyout>
+          </Button.Flyout>
+        </Button>
+      </Grid>
+
+      <Button x:Name="HubButton" Grid.Column="7" Style="{StaticResource ChromeButtonStyle}" ToolTipService.ToolTip="Hub (favorites, reading list, history, downloads)" AutomationProperties.Name="Hub" Click="Hub_Click">
+        <Viewbox Width="22" Height="22">
+          <Canvas Width="22" Height="22">
+            <Path Data="M5.5,2.5 L7.2,7.1 L12,7.3 L8.2,10.2 L9.4,15 L5.5,12.3 L1.6,15 L2.8,10.2 L-1,7.3 L3.8,7.1 Z" Stroke="{ThemeResource EdgeTextBrush}" StrokeThickness="1.3" Fill="Transparent" Canvas.Left="1" Canvas.Top="2" />
+            <Line X1="13" Y1="6" X2="21" Y2="6" Stroke="{ThemeResource EdgeTextBrush}" StrokeThickness="1.4" />
+            <Line X1="13" Y1="11" X2="21" Y2="11" Stroke="{ThemeResource EdgeTextBrush}" StrokeThickness="1.4" />
+            <Line X1="13" Y1="16" X2="21" Y2="16" Stroke="{ThemeResource EdgeTextBrush}" StrokeThickness="1.4" />
+          </Canvas>
+        </Viewbox>
+      </Button>
+      <Button x:Name="WebNoteButton" Grid.Column="8" Content="&#xE70F;" Style="{StaticResource ChromeButtonStyle}" ToolTipService.ToolTip="Make a Web Note" AutomationProperties.Name="Make a Web Note" Click="WebNote_Click" />
+      <Button x:Name="ShareButton" Grid.Column="9" Content="&#xE72D;" Style="{StaticResource ChromeButtonStyle}" ToolTipService.ToolTip="Share" AutomationProperties.Name="Share" Click="Share_Click" />
+      <Button x:Name="MoreButton" Grid.Column="10" Content="&#xE712;" Style="{StaticResource ChromeButtonStyle}" ToolTipService.ToolTip="Settings and more (Alt+X)" AutomationProperties.Name="Settings and more">
+        <Button.Flyout>
+          <Flyout x:Name="MoreMenu" Placement="BottomEdgeAlignedRight" FlyoutPresenterStyle="{StaticResource LegacyFlyoutPresenterStyle}" Opened="MoreMenu_Opened" Closed="MoreMenu_Closed">
+            <Border Width="330" MaxHeight="650" Background="{ThemeResource EdgeSurfaceBrush}" Padding="0,8">
+              <ScrollViewer VerticalScrollMode="Auto" VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                  <Button Style="{StaticResource MenuRowStyle}" Click="NewTab_Click"><Grid HorizontalAlignment="Stretch" MinWidth="286"><Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions><FontIcon Glyph="&#xE710;" Style="{StaticResource MoreMenuIconStyle}" /><TextBlock Grid.Column="1" Text="New tab" /><TextBlock Grid.Column="2" Text="Ctrl+T" Foreground="{ThemeResource EdgeSecondaryTextBrush}" /></Grid></Button>
+                  <Button Style="{StaticResource MenuRowStyle}" Click="NewWindow_Click"><Grid HorizontalAlignment="Stretch" MinWidth="286"><Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions><FontIcon Glyph="&#xE8A7;" Style="{StaticResource MoreMenuIconStyle}" /><TextBlock Grid.Column="1" Text="New window" /><TextBlock Grid.Column="2" Text="Ctrl+N" Foreground="{ThemeResource EdgeSecondaryTextBrush}" /></Grid></Button>
+                  <Button Style="{StaticResource MenuRowStyle}" Click="NewPrivateWindow_Click"><Grid HorizontalAlignment="Stretch" MinWidth="286"><Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions><FontIcon Glyph="&#xE72E;" Style="{StaticResource MoreMenuIconStyle}" /><TextBlock Grid.Column="1" Text="New InPrivate window" /><TextBlock Grid.Column="2" Text="Ctrl+Shift+P" Foreground="{ThemeResource EdgeSecondaryTextBrush}" /></Grid></Button>
+                  <Rectangle Height="1" Fill="{ThemeResource EdgeDividerBrush}" Margin="0,5" />
+                  <Grid Height="44" Padding="14,0">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /><ColumnDefinition Width="42" /><ColumnDefinition Width="56" /><ColumnDefinition Width="42" /></Grid.ColumnDefinitions>
+                    <FontIcon Glyph="&#xE71C;" Style="{StaticResource MoreMenuIconStyle}" />
+                    <TextBlock Grid.Column="1" Text="Zoom" VerticalAlignment="Center" />
+                    <Button Grid.Column="2" Content="&#xE738;" Style="{StaticResource ChromeButtonStyle}" ToolTipService.ToolTip="Zoom out" AutomationProperties.Name="Zoom out" Click="ZoomOut_Click" />
+                    <Button x:Name="ZoomLabelButton" Grid.Column="3" Content="100%" Background="Transparent" BorderThickness="0" AutomationProperties.Name="Reset zoom" Click="ResetZoom_Click" />
+                    <Button Grid.Column="4" Content="&#xE710;" Style="{StaticResource ChromeButtonStyle}" ToolTipService.ToolTip="Zoom in" AutomationProperties.Name="Zoom in" Click="ZoomIn_Click" />
+                  </Grid>
+                  <Button Style="{StaticResource MenuRowStyle}" Click="Favorites_Click"><Grid HorizontalAlignment="Stretch" MinWidth="286"><Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions><FontIcon Glyph="&#xE734;" Style="{StaticResource MoreMenuIconStyle}" /><TextBlock Grid.Column="1" Text="Favorites" /></Grid></Button>
+                  <Button Style="{StaticResource MenuRowStyle}" Click="ReadingList_Click"><Grid HorizontalAlignment="Stretch" MinWidth="286"><Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions><FontIcon Glyph="&#xE736;" Style="{StaticResource MoreMenuIconStyle}" /><TextBlock Grid.Column="1" Text="Reading list" /></Grid></Button>
+                  <Button Style="{StaticResource MenuRowStyle}" Click="History_Click"><Grid HorizontalAlignment="Stretch" MinWidth="286"><Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions><FontIcon Glyph="&#xE81C;" Style="{StaticResource MoreMenuIconStyle}" /><TextBlock Grid.Column="1" Text="History" /></Grid></Button>
+                  <Button Style="{StaticResource MenuRowStyle}" Click="Downloads_Click"><Grid HorizontalAlignment="Stretch" MinWidth="286"><Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions><FontIcon Glyph="&#xE896;" Style="{StaticResource MoreMenuIconStyle}" /><TextBlock Grid.Column="1" Text="Downloads" /></Grid></Button>
+                  <Rectangle Height="1" Fill="{ThemeResource EdgeDividerBrush}" Margin="0,5" />
+                  <Button x:Name="ShowInToolbarMenuButton" Style="{StaticResource MenuRowStyle}"><Button.Flyout><Flyout x:Name="ShowInToolbarFlyout" Placement="LeftEdgeAlignedTop" FlyoutPresenterStyle="{StaticResource LegacyFlyoutPresenterStyle}" Opened="MoreSubmenu_Opened" Closed="MoreSubmenu_Closed"><Border Width="300" Background="{ThemeResource EdgeSurfaceBrush}" Padding="0,8"><StackPanel><TextBlock Text="Show in toolbar" FontFamily="Segoe UI Semibold" FontSize="15" Margin="16,7,16,9" /><Button Style="{StaticResource MenuRowStyle}" Content="Home button" Click="ToggleHomeToolbar_Click" /><Button Style="{StaticResource MenuRowStyle}" Content="Favorites bar" Click="ToggleFavoritesBar_Click" /></StackPanel></Border></Flyout></Button.Flyout><Grid HorizontalAlignment="Stretch" MinWidth="286"><Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /><ColumnDefinition Width="24" /></Grid.ColumnDefinitions><FontIcon Glyph="&#xE7F4;" Style="{StaticResource MoreMenuIconStyle}" /><TextBlock Grid.Column="1" Text="Show in toolbar" /><FontIcon Grid.Column="2" Glyph="&#xE76C;" Style="{StaticResource MoreMenuIconStyle}" /></Grid></Button>
+                  <Button Style="{StaticResource MenuRowStyle}" AutomationProperties.Name="Print" Click="Print_Click"><Grid HorizontalAlignment="Stretch" MinWidth="286"><Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions><FontIcon Glyph="&#xE749;" Style="{StaticResource MoreMenuIconStyle}" /><TextBlock Grid.Column="1" Text="Print" /><TextBlock Grid.Column="2" Text="Ctrl+P" Foreground="{ThemeResource EdgeSecondaryTextBrush}" /></Grid></Button>
+                  <Button Style="{StaticResource MenuRowStyle}" AutomationProperties.Name="Find on page" Click="Find_Click"><Grid HorizontalAlignment="Stretch" MinWidth="286"><Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions><FontIcon Glyph="&#xE721;" Style="{StaticResource MoreMenuIconStyle}" /><TextBlock Grid.Column="1" Text="Find on page" /><TextBlock Grid.Column="2" Text="Ctrl+F" Foreground="{ThemeResource EdgeSecondaryTextBrush}" /></Grid></Button>
+                  <Button Style="{StaticResource MenuRowStyle}" Click="ReadAloud_Click"><Grid HorizontalAlignment="Stretch" MinWidth="286"><Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions><FontIcon Glyph="&#xE767;" Style="{StaticResource MoreMenuIconStyle}" /><TextBlock Grid.Column="1" Text="Read aloud" /><TextBlock Grid.Column="2" Text="Ctrl+Shift+G" Foreground="{ThemeResource EdgeSecondaryTextBrush}" /></Grid></Button>
+                  <Button Style="{StaticResource MenuRowStyle}" AutomationProperties.Name="More tools"><Button.Flyout><Flyout x:Name="MoreToolsFlyout" Placement="LeftEdgeAlignedTop" FlyoutPresenterStyle="{StaticResource LegacyFlyoutPresenterStyle}" Opened="MoreSubmenu_Opened" Closed="MoreSubmenu_Closed"><Border Width="310" Background="{ThemeResource EdgeSurfaceBrush}" Padding="0,8"><StackPanel><Button Style="{StaticResource MenuRowStyle}" Click="OpenFile_Click"><Grid HorizontalAlignment="Stretch" MinWidth="260"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions><TextBlock Text="Open file" /><TextBlock Grid.Column="1" Text="Ctrl+O" Foreground="{ThemeResource EdgeSecondaryTextBrush}" /></Grid></Button><Button Style="{StaticResource MenuRowStyle}" Click="SavePage_Click"><Grid HorizontalAlignment="Stretch" MinWidth="260"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions><TextBlock Text="Save page as" /><TextBlock Grid.Column="1" Text="Ctrl+S" Foreground="{ThemeResource EdgeSecondaryTextBrush}" /></Grid></Button><Button Style="{StaticResource MenuRowStyle}" Content="Make a Web Note" Click="WebNote_Click" /><Button Style="{StaticResource MenuRowStyle}" Content="Share" Click="Share_Click" /><Button Style="{StaticResource MenuRowStyle}" Content="View source" AutomationProperties.Name="View source" Click="ViewSource_Click" /><Button Style="{StaticResource MenuRowStyle}" Click="FullScreen_Click"><Grid HorizontalAlignment="Stretch" MinWidth="260"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions><TextBlock Text="Full screen" /><TextBlock Grid.Column="1" Text="F11" Foreground="{ThemeResource EdgeSecondaryTextBrush}" /></Grid></Button></StackPanel></Border></Flyout></Button.Flyout><Grid HorizontalAlignment="Stretch" MinWidth="286"><Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /><ColumnDefinition Width="24" /></Grid.ColumnDefinitions><FontIcon Glyph="&#xE712;" Style="{StaticResource MoreMenuIconStyle}" /><TextBlock Grid.Column="1" Text="More tools" /><FontIcon Grid.Column="2" Glyph="&#xE76C;" Style="{StaticResource MoreMenuIconStyle}" /></Grid></Button>
+                  <Rectangle Height="1" Fill="{ThemeResource EdgeDividerBrush}" Margin="0,5" />
+                  <Button Style="{StaticResource MenuRowStyle}" Click="Settings_Click"><Grid HorizontalAlignment="Stretch" MinWidth="286"><Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions><FontIcon Glyph="&#xE713;" Style="{StaticResource MoreMenuIconStyle}" /><TextBlock Grid.Column="1" Text="Settings" /></Grid></Button>
+                  <Button Style="{StaticResource MenuRowStyle}"><Button.Flyout><Flyout x:Name="HelpFeedbackFlyout" Placement="LeftEdgeAlignedBottom" FlyoutPresenterStyle="{StaticResource LegacyFlyoutPresenterStyle}" Opened="MoreSubmenu_Opened" Closed="MoreSubmenu_Closed"><Border Width="300" Background="{ThemeResource EdgeSurfaceBrush}" Padding="0,8"><StackPanel><Button Style="{StaticResource MenuRowStyle}" Content="Microsoft Edge help" Click="EdgeHelp_Click" /><Button Style="{StaticResource MenuRowStyle}" Content="Send feedback" Click="EdgeFeedback_Click" /><Rectangle Height="1" Fill="{ThemeResource EdgeDividerBrush}" Margin="0,5" /><Button Style="{StaticResource MenuRowStyle}" Content="About Microsoft Edge" Click="About_Click" /></StackPanel></Border></Flyout></Button.Flyout><Grid HorizontalAlignment="Stretch" MinWidth="286"><Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /><ColumnDefinition Width="24" /></Grid.ColumnDefinitions><FontIcon Glyph="&#xE897;" Style="{StaticResource MoreMenuIconStyle}" /><TextBlock Grid.Column="1" Text="Help and feedback" /><FontIcon Grid.Column="2" Glyph="&#xE76C;" Style="{StaticResource MoreMenuIconStyle}" /></Grid></Button>
+                </StackPanel>
+              </ScrollViewer>
+            </Border>
+          </Flyout>
+        </Button.Flyout>
+      </Button>
+
+      <ProgressBar x:Name="LoadingProgress" Grid.ColumnSpan="11" Height="2" VerticalAlignment="Bottom" IsIndeterminate="True" Foreground="{StaticResource EdgeBlueBrush}" Visibility="Collapsed" />
+    </Grid>
+
+    <!-- Optional favorites bar. -->
+    <Border x:Name="FavoritesBar" Grid.Row="2" Background="{ThemeResource EdgeSurfaceBrush}" BorderBrush="{ThemeResource EdgeDividerBrush}" BorderThickness="0,0,0,1" Visibility="Collapsed">
+      <ScrollViewer HorizontalScrollMode="Enabled" HorizontalScrollBarVisibility="Hidden" VerticalScrollMode="Disabled">
+        <StackPanel x:Name="FavoritesBarItems" Orientation="Horizontal" Height="32" Margin="8,0" />
+      </ScrollViewer>
+    </Border>
+
+    <!-- Find-on-page strip. -->
+    <Border x:Name="FindBar" Grid.Row="3" Background="{ThemeResource EdgeSubtleSurfaceBrush}" BorderBrush="{ThemeResource EdgeDividerBrush}" BorderThickness="0,0,0,1" Visibility="Collapsed">
+      <Grid x:Name="FindBarLayout" Height="42" HorizontalAlignment="Right" Width="500" Margin="0,0,10,0">
+        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="64" /><ColumnDefinition Width="42" /><ColumnDefinition Width="42" /><ColumnDefinition Width="42" /></Grid.ColumnDefinitions>
+        <TextBox x:Name="FindBox" Margin="4" PlaceholderText="Find on page" KeyDown="FindBox_KeyDown" TextChanged="FindBox_TextChanged" />
+        <TextBlock x:Name="FindCountText" Grid.Column="1" Text="0 of 0" FontSize="12" Foreground="{ThemeResource EdgeSecondaryTextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+        <Button Grid.Column="2" Content="&#xE72B;" Style="{StaticResource ChromeButtonStyle}" ToolTipService.ToolTip="Find previous (Shift+Enter)" AutomationProperties.Name="Find previous" Click="FindPrevious_Click" />
+        <Button Grid.Column="3" Content="&#xE72A;" Style="{StaticResource ChromeButtonStyle}" ToolTipService.ToolTip="Find next (Enter)" AutomationProperties.Name="Find next" Click="FindNext_Click" />
+        <Button Grid.Column="4" Content="&#xE711;" Style="{StaticResource ChromeButtonStyle}" ToolTipService.ToolTip="Close" AutomationProperties.Name="Close find" Click="CloseFind_Click" />
+      </Grid>
+    </Border>
+
+    <!-- Web Note toolbar. -->
+    <Border x:Name="NoteBar" Grid.Row="4" Background="#4A4A4A" RequestedTheme="Dark" Visibility="Collapsed">
+      <Grid Height="52">
+        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+        <InkToolbar x:Name="NoteInkToolbar" TargetInkCanvas="{x:Bind NoteCanvas}" Background="Transparent" />
+        <StackPanel Grid.Column="1" Orientation="Horizontal">
+          <Button Width="52" Content="&#xE74E;" Foreground="White" Style="{StaticResource ChromeButtonStyle}" ToolTipService.ToolTip="Save Web Note as PNG" AutomationProperties.Name="Save Web Note" Click="SaveNote_Click" />
+          <Button Width="52" Content="&#xE711;" Foreground="White" Style="{StaticResource ChromeButtonStyle}" ToolTipService.ToolTip="Exit Web Note" AutomationProperties.Name="Exit Web Note" Click="ExitNote_Click" />
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <!-- Legacy Edge Read aloud ribbon. -->
+    <Border x:Name="ReadAloudBar" Grid.Row="4" Background="{ThemeResource EdgeSurfaceBrush}" BorderBrush="{ThemeResource EdgeToolbarDividerBrush}" BorderThickness="0,0,0,1" Visibility="Collapsed">
+      <Grid x:Name="ReadAloudLayout" Height="52">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition x:Name="ReadAloudLabelColumn" Width="170" />
+          <ColumnDefinition Width="48" />
+          <ColumnDefinition Width="48" />
+          <ColumnDefinition Width="48" />
+          <ColumnDefinition x:Name="ReadAloudPositionColumn" Width="*" />
+          <ColumnDefinition x:Name="ReadAloudVoiceColumn" Width="132" />
+          <ColumnDefinition Width="52" />
+        </Grid.ColumnDefinitions>
+        <StackPanel x:Name="ReadAloudLabelHost" Grid.Column="0" Orientation="Horizontal" Margin="18,0,0,0" VerticalAlignment="Center">
+          <FontIcon x:Name="ReadAloudLabelIcon" Glyph="&#xE767;" FontFamily="Segoe MDL2 Assets" FontSize="19" Foreground="{ThemeResource EdgeTextBrush}" Margin="0,0,10,0" />
+          <TextBlock x:Name="ReadAloudLabelText" Text="Read aloud" FontFamily="Segoe UI Semibold" FontSize="15" VerticalAlignment="Center" />
+        </StackPanel>
+        <Button Grid.Column="1" Content="&#xE892;" Style="{StaticResource ChromeButtonStyle}" ToolTipService.ToolTip="Previous paragraph" AutomationProperties.Name="Previous paragraph" Click="ReadAloudPrevious_Click" />
+        <Button x:Name="ReadAloudPlayPauseButton" Grid.Column="2" Content="&#xE769;" Style="{StaticResource ChromeButtonStyle}" ToolTipService.ToolTip="Pause" AutomationProperties.Name="Pause read aloud" Click="ReadAloudPlayPause_Click" />
+        <Button Grid.Column="3" Content="&#xE893;" Style="{StaticResource ChromeButtonStyle}" ToolTipService.ToolTip="Next paragraph" AutomationProperties.Name="Next paragraph" Click="ReadAloudNext_Click" />
+        <TextBlock x:Name="ReadAloudPositionText" Grid.Column="4" Foreground="{ThemeResource EdgeSecondaryTextBrush}" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Center" />
+        <Button x:Name="ReadAloudOptionsButton" Grid.Column="5" Background="Transparent" BorderThickness="0" FontSize="14" ToolTipService.ToolTip="Voice options">
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+            <FontIcon x:Name="ReadAloudOptionsIcon" Glyph="&#xE713;" FontFamily="Segoe MDL2 Assets" FontSize="16" Margin="0,0,8,0" />
+            <TextBlock x:Name="ReadAloudOptionsText" Text="Voice options" VerticalAlignment="Center" />
+          </StackPanel>
+          <Button.Flyout>
+            <Flyout x:Name="ReadAloudOptionsFlyout" Placement="BottomEdgeAlignedRight" FlyoutPresenterStyle="{StaticResource LegacyFlyoutPresenterStyle}">
+              <Border Width="320" Margin="-12" Padding="20,17,20,20" Background="{ThemeResource EdgeSurfaceBrush}" BorderBrush="{ThemeResource EdgePanelBorderBrush}" BorderThickness="1">
+                <StackPanel>
+                  <Grid>
+                    <TextBlock Text="Voice options" FontFamily="Segoe UI Semibold" FontSize="18" />
+                    <TextBlock x:Name="ReadAloudRateLabel" Text="1.0×" HorizontalAlignment="Right" Foreground="{ThemeResource EdgeSecondaryTextBrush}" FontSize="13" VerticalAlignment="Center" />
+                  </Grid>
+                  <TextBlock Text="Speed" FontSize="13" Margin="0,18,0,4" />
+                  <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="28" /><ColumnDefinition Width="*" /><ColumnDefinition Width="28" /></Grid.ColumnDefinitions>
+                    <TextBlock Text="−" FontSize="18" VerticalAlignment="Center" />
+                    <Slider x:Name="ReadAloudRateSlider" Grid.Column="1" Minimum="0.5" Maximum="2" Value="1" StepFrequency="0.1" ValueChanged="ReadAloudRateSlider_ValueChanged" />
+                    <TextBlock Grid.Column="2" Text="+" FontSize="18" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                  </Grid>
+                  <TextBlock Text="Voice" FontSize="13" Margin="0,14,0,6" />
+                  <ComboBox x:Name="ReadAloudVoiceBox" HorizontalAlignment="Stretch" DisplayMemberPath="DisplayName" SelectionChanged="ReadAloudVoiceBox_SelectionChanged" />
+                </StackPanel>
+              </Border>
+            </Flyout>
+          </Button.Flyout>
+        </Button>
+        <Button Grid.Column="6" Content="&#xE711;" Style="{StaticResource ChromeButtonStyle}" ToolTipService.ToolTip="Close Read aloud" AutomationProperties.Name="Close Read aloud" Click="CloseReadAloud_Click" />
+        <MediaElement x:Name="ReadAloudPlayer" Width="1" Height="1" Opacity="0" IsHitTestVisible="False" AreTransportControlsEnabled="False" AutoPlay="False" MediaEnded="ReadAloudPlayer_MediaEnded" MediaFailed="ReadAloudPlayer_MediaFailed" />
+      </Grid>
+    </Border>
+
+    <!-- EdgeHTML-era integrated PDF document toolbar. -->
+    <Border x:Name="PdfBar" Grid.Row="4" Background="#2B2B2B" BorderBrush="#171717" BorderThickness="0,0,0,1" RequestedTheme="Dark" Visibility="Collapsed">
+      <Grid Height="52">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+        <StackPanel x:Name="PdfTitlePanel" Grid.Column="0" Orientation="Horizontal" Margin="16,0,8,0" VerticalAlignment="Center">
+          <FontIcon Glyph="&#xEA90;" FontFamily="Segoe MDL2 Assets" FontSize="18" Foreground="White" Margin="0,0,10,0" />
+          <TextBlock x:Name="PdfTitleText" Text="PDF document" Foreground="White" FontFamily="Segoe UI Semibold" FontSize="14" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+        </StackPanel>
+        <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+          <StackPanel x:Name="PdfNavigationControls" Orientation="Horizontal">
+            <Button Content="&#xE892;" Width="44" Height="52" Foreground="White" Style="{StaticResource ChromeButtonStyle}" ToolTipService.ToolTip="Previous page" AutomationProperties.Name="Previous PDF page" Click="PdfPreviousPage_Click" />
+            <TextBox x:Name="PdfPageBox" Width="48" Height="30" Margin="2,11,5,11" Text="1" FontSize="13" Foreground="#1B1B1B" TextAlignment="Center" VerticalContentAlignment="Center" Padding="2,0" BorderBrush="#858585" Background="#F8F8F8" KeyDown="PdfPageBox_KeyDown" />
+            <TextBlock x:Name="PdfPageCountText" Text="/ 0" MinWidth="48" Foreground="#E7E7E7" FontSize="13" VerticalAlignment="Center" />
+            <Button Content="&#xE893;" Width="44" Height="52" Foreground="White" Style="{StaticResource ChromeButtonStyle}" ToolTipService.ToolTip="Next page" AutomationProperties.Name="Next PDF page" Click="PdfNextPage_Click" />
+          </StackPanel>
+          <StackPanel x:Name="PdfExpandedControls" Orientation="Horizontal">
+            <Rectangle Width="1" Height="26" Fill="#666666" Margin="5,13" />
+            <Button Content="&#xE738;" Width="44" Height="52" Foreground="White" Style="{StaticResource ChromeButtonStyle}" ToolTipService.ToolTip="Zoom out (Ctrl+Minus)" AutomationProperties.Name="Zoom out PDF" Click="PdfZoomOut_Click" />
+            <Button x:Name="PdfZoomText" Content="100%" MinWidth="62" Height="52" Foreground="White" Background="Transparent" BorderThickness="0" FontSize="13" ToolTipService.ToolTip="Actual size" Click="PdfActualSize_Click" />
+            <Button Content="&#xE710;" Width="44" Height="52" Foreground="White" Style="{StaticResource ChromeButtonStyle}" ToolTipService.ToolTip="Zoom in (Ctrl+Plus)" AutomationProperties.Name="Zoom in PDF" Click="PdfZoomIn_Click" />
+            <Button x:Name="PdfFitButton" Content="&#xE9A6;" Width="44" Height="52" Foreground="White" Style="{StaticResource ChromeButtonStyle}" ToolTipService.ToolTip="Fit to width (Ctrl+Backslash)" AutomationProperties.Name="Fit PDF to width" Click="PdfFit_Click" />
+            <Button Content="&#xE7AD;" Width="44" Height="52" Foreground="White" Style="{StaticResource ChromeButtonStyle}" ToolTipService.ToolTip="Rotate clockwise (Ctrl+Right bracket)" AutomationProperties.Name="Rotate PDF clockwise" Click="PdfRotate_Click" />
+            <Button Content="&#xE74E;" Width="44" Height="52" Foreground="White" Style="{StaticResource ChromeButtonStyle}" ToolTipService.ToolTip="Save a copy" AutomationProperties.Name="Save a copy of PDF" Click="PdfSave_Click" />
+            <Button Content="&#xE749;" Width="44" Height="52" Foreground="White" Style="{StaticResource ChromeButtonStyle}" ToolTipService.ToolTip="Open for printing" AutomationProperties.Name="Print PDF" Click="PdfPrint_Click" />
+          </StackPanel>
+          <Button x:Name="PdfOverflowButton" Content="&#xE712;" Width="48" Height="52" Foreground="White" Style="{StaticResource ChromeButtonStyle}" ToolTipService.ToolTip="PDF options" AutomationProperties.Name="PDF options" Visibility="Collapsed">
+            <Button.Flyout>
+              <Flyout x:Name="PdfOverflowFlyout" Placement="BottomEdgeAlignedRight" FlyoutPresenterStyle="{StaticResource LegacyFlyoutPresenterStyle}">
+                <Border Width="280" Background="{ThemeResource EdgeSurfaceBrush}" Padding="0,8">
+                  <StackPanel>
+                    <TextBlock Text="PDF options" FontFamily="Segoe UI Semibold" FontSize="18" Margin="16,8,16,7" />
+                    <Grid Height="48" Margin="8,0">
+                      <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="44" /><ColumnDefinition Width="62" /><ColumnDefinition Width="44" /></Grid.ColumnDefinitions>
+                      <TextBlock Text="Zoom" Margin="8,0" VerticalAlignment="Center" FontSize="14" />
+                      <Button Grid.Column="1" Content="&#xE738;" Style="{StaticResource ChromeButtonStyle}" ToolTipService.ToolTip="Zoom out" Click="PdfZoomOut_Click" />
+                      <Button x:Name="PdfOverflowZoomText" Grid.Column="2" Content="100%" Background="Transparent" BorderThickness="0" FontSize="13" Click="PdfActualSize_Click" />
+                      <Button Grid.Column="3" Content="&#xE710;" Style="{StaticResource ChromeButtonStyle}" ToolTipService.ToolTip="Zoom in" Click="PdfZoomIn_Click" />
+                    </Grid>
+                    <Button Content="Fit to width" Style="{StaticResource MenuRowStyle}" Click="PdfFit_Click" />
+                    <Button Content="Rotate clockwise" Style="{StaticResource MenuRowStyle}" Click="PdfRotate_Click" />
+                    <Button Content="Save a copy" Style="{StaticResource MenuRowStyle}" Click="PdfSave_Click" />
+                    <Button Content="Print" Style="{StaticResource MenuRowStyle}" Click="PdfPrint_Click" />
+                  </StackPanel>
+                </Border>
+              </Flyout>
+            </Button.Flyout>
+          </Button>
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <Grid x:Name="ContentArea" Grid.Row="5" Background="{ThemeResource EdgeElevatedSurfaceBrush}">
+      <Grid x:Name="BrowserHost" Background="{ThemeResource EdgeElevatedSurfaceBrush}" />
+
+      <Grid x:Name="PdfSurface" Background="#555555" Visibility="Collapsed" SizeChanged="PdfSurface_SizeChanged">
+        <ScrollViewer x:Name="PdfScrollViewer" HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollMode="Auto" VerticalScrollBarVisibility="Auto" ZoomMode="Disabled" ViewChanged="PdfScrollViewer_ViewChanged">
+          <StackPanel x:Name="PdfPagesPanel" HorizontalAlignment="Center" Padding="0,20,0,44" />
+        </ScrollViewer>
+        <Border x:Name="PdfLoadingOverlay" Background="#B32B2B2B" Visibility="Collapsed">
+          <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+            <ProgressRing x:Name="PdfLoadingRing" Width="42" Height="42" Foreground="White" IsActive="False" />
+            <TextBlock x:Name="PdfLoadingText" Text="Opening PDF…" Foreground="White" FontSize="15" Margin="0,14,0,0" HorizontalAlignment="Center" />
+          </StackPanel>
+        </Border>
+      </Grid>
+
+      <Grid x:Name="NoteSurface" Background="{ThemeResource EdgeElevatedSurfaceBrush}" Visibility="Collapsed">
+        <Image x:Name="NotePreview" Stretch="Fill" />
+        <InkCanvas x:Name="NoteCanvas" />
+      </Grid>
+
+      <Border x:Name="StatusBubble" Background="{ThemeResource EdgeStatusBackgroundBrush}" BorderBrush="{ThemeResource EdgeStatusBorderBrush}" BorderThickness="1" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="8" Padding="10,5" Visibility="Collapsed">
+        <TextBlock x:Name="StatusText" FontSize="12" TextTrimming="CharacterEllipsis" MaxWidth="620" />
+      </Border>
+    </Grid>
+
+    <!-- Legacy Edge download tray. Closing it hides status without canceling the transfer. -->
+    <Border x:Name="DownloadShelf" Grid.Row="6" MinHeight="72" Background="{ThemeResource EdgeToolbarBrush}" BorderBrush="{ThemeResource EdgeDividerBrush}" BorderThickness="0,1,0,0" Visibility="Collapsed" SizeChanged="BottomNotification_SizeChanged">
+      <Grid x:Name="DownloadShelfLayout">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="*" />
+          <RowDefinition x:Name="DownloadShelfActionsRow" Height="0" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="48" />
+        </Grid.ColumnDefinitions>
+        <StackPanel x:Name="DownloadShelfTextHost" Grid.Column="0" Margin="18,10,16,10" VerticalAlignment="Center">
+          <TextBlock x:Name="DownloadShelfTitleText" FontFamily="Segoe UI" FontSize="14" TextTrimming="CharacterEllipsis" />
+          <TextBlock x:Name="DownloadShelfDetailText" FontFamily="Segoe UI" FontSize="12" Foreground="{ThemeResource EdgeSecondaryTextBrush}" TextTrimming="CharacterEllipsis" Margin="0,4,0,0" />
+        </StackPanel>
+        <StackPanel x:Name="DownloadShelfActionHost" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Right">
+          <Button x:Name="DownloadShelfPauseButton" Content="Pause" MinWidth="68" MinHeight="34" Margin="4,0" Visibility="Collapsed" Click="DownloadShelfPause_Click" />
+          <Button x:Name="DownloadShelfOpenButton" Content="Open" MinWidth="72" MinHeight="34" Margin="4,0" Visibility="Collapsed" Click="DownloadShelfOpen_Click" />
+          <Button x:Name="DownloadShelfFolderButton" Content="Open folder" MinWidth="98" MinHeight="34" Margin="4,0" Visibility="Collapsed" Click="DownloadShelfFolder_Click" />
+          <Button x:Name="DownloadShelfCancelButton" Content="Cancel" MinWidth="68" MinHeight="34" Margin="4,0" Visibility="Collapsed" Click="DownloadShelfCancel_Click" />
+          <Button x:Name="DownloadShelfViewButton" Content="View downloads" MinWidth="112" MinHeight="34" Margin="4,0" Click="DownloadShelfView_Click" />
+        </StackPanel>
+        <Button x:Name="DownloadShelfCloseButton" Grid.Column="2" Content="&#xE711;" Width="48" Height="48" FontFamily="Segoe MDL2 Assets" FontSize="13" Style="{StaticResource ChromeButtonStyle}" ToolTipService.ToolTip="Hide download status" AutomationProperties.Name="Hide download status" Click="DownloadShelfClose_Click" />
+        <ProgressBar x:Name="DownloadShelfProgress" Grid.RowSpan="2" Grid.ColumnSpan="3" Height="3" VerticalAlignment="Bottom" Minimum="0" Maximum="100" Foreground="{StaticResource EdgeBlueBrush}" Visibility="Collapsed" />
+      </Grid>
+    </Border>
+
+    <!-- Popup keeps address suggestions above the native-windowed EdgeHTML surface. -->
+    <Popup x:Name="OmniboxPopup" IsLightDismissEnabled="False">
+      <Border x:Name="OmniboxBorder" Background="{ThemeResource EdgeElevatedSurfaceBrush}" BorderBrush="{ThemeResource EdgeDividerBrush}" BorderThickness="0,0,0,1">
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="8" />
+          </Grid.RowDefinitions>
+          <ListView x:Name="OmniboxList" Grid.Row="0" SelectionMode="Single" IsItemClickEnabled="True" ItemClick="OmniboxList_ItemClick" HorizontalContentAlignment="Stretch" Padding="0" ScrollViewer.HorizontalScrollMode="Disabled" ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollMode="Auto" ScrollViewer.VerticalScrollBarVisibility="Auto" AutomationProperties.AutomationId="OmniboxSuggestions" AutomationProperties.Name="Address bar suggestions">
+            <ListView.ItemContainerStyle>
+              <Style TargetType="ListViewItem">
+                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="Margin" Value="0" />
+                <Setter Property="MinHeight" Value="32" />
+              </Style>
+            </ListView.ItemContainerStyle>
+            <ListView.ItemTemplate>
+              <DataTemplate>
+                <Grid MinHeight="32" Padding="0,0,8,0" AutomationProperties.Name="{Binding AutomationName}">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="32" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                  </Grid.ColumnDefinitions>
+                  <FontIcon Grid.Column="0" Glyph="{Binding Glyph}" FontFamily="Segoe MDL2 Assets" FontSize="12" Foreground="{ThemeResource EdgeTextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                  <TextBlock Grid.Column="1" Text="{Binding Title}" FontFamily="Segoe UI" FontSize="15" Foreground="{ThemeResource EdgeTextBrush}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="0,0,12,0" />
+                  <TextBlock Grid.Column="2" Text="{Binding ActionLabel}" FontFamily="Segoe UI" FontSize="14" Foreground="{ThemeResource EdgeSecondaryTextBrush}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                </Grid>
+              </DataTemplate>
+            </ListView.ItemTemplate>
+          </ListView>
+        </Grid>
+      </Border>
+    </Popup>
+
+    <!-- Hub/settings pane uses a Popup so it stays above the native EdgeHTML surface. -->
+    <Popup x:Name="SidePanePopup" IsLightDismissEnabled="True" Closed="SidePanePopup_Closed">
+      <Border x:Name="SidePaneBorder" Width="562" Background="{ThemeResource EdgeSurfaceBrush}" BorderBrush="{ThemeResource EdgePanelBorderBrush}" BorderThickness="1,0,0,0">
+        <Grid>
+          <Grid x:Name="HubPanel">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition x:Name="HubNavigationColumn" Width="200" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions><RowDefinition x:Name="HubCompactTabsRow" Height="0" /><RowDefinition x:Name="HubHeaderRow" Height="65" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+
+            <Border x:Name="HubNavigationRail" Grid.RowSpan="3" Grid.Column="0" Background="{ThemeResource EdgeRailBrush}" BorderBrush="{ThemeResource EdgeDividerBrush}" BorderThickness="0,0,1,0">
+              <Grid>
+                <Grid.RowDefinitions><RowDefinition Height="65" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+                <Grid BorderBrush="{ThemeResource EdgeDividerBrush}" BorderThickness="0,0,0,1">
+                  <Button Content="&#xE76B;" Width="48" Height="48" HorizontalAlignment="Left" Style="{StaticResource ChromeButtonStyle}" ToolTipService.ToolTip="Collapse Hub navigation" AutomationProperties.Name="Collapse Hub navigation" Click="HubNavigationToggle_Click" />
+                  <TextBlock Text="Hub" FontFamily="Segoe UI" FontSize="21" FontWeight="SemiLight" Margin="54,0,0,0" VerticalAlignment="Center" />
+                </Grid>
+                <StackPanel Grid.Row="1" Margin="0,8,0,0">
+                  <Button Style="{StaticResource MenuRowStyle}" Height="42" Click="Favorites_Click">
+                    <Grid Width="200" Height="42"><Border x:Name="HubNavFavoritesIndicator" Width="4" Background="{StaticResource EdgeBlueBrush}" HorizontalAlignment="Left" /><FontIcon Glyph="&#xE734;" FontFamily="Segoe MDL2 Assets" FontSize="16" Margin="17,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center" /><TextBlock Text="Favorites" FontSize="14" Margin="50,0,8,0" VerticalAlignment="Center" /></Grid>
+                  </Button>
+                  <Button Style="{StaticResource MenuRowStyle}" Height="42" Click="ReadingList_Click">
+                    <Grid Width="200" Height="42"><Border x:Name="HubNavReadingIndicator" Width="4" Background="{StaticResource EdgeBlueBrush}" HorizontalAlignment="Left" Visibility="Collapsed" /><FontIcon Glyph="&#xE736;" FontFamily="Segoe MDL2 Assets" FontSize="16" Margin="17,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center" /><TextBlock Text="Reading list" FontSize="14" Margin="50,0,8,0" VerticalAlignment="Center" /></Grid>
+                  </Button>
+                  <Button Style="{StaticResource MenuRowStyle}" Height="42" Click="Books_Click">
+                    <Grid Width="200" Height="42"><Border x:Name="HubNavBooksIndicator" Width="4" Background="{StaticResource EdgeBlueBrush}" HorizontalAlignment="Left" Visibility="Collapsed" /><FontIcon Glyph="&#xE82D;" FontFamily="Segoe MDL2 Assets" FontSize="16" Margin="17,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center" /><TextBlock Text="Books" FontSize="14" Margin="50,0,8,0" VerticalAlignment="Center" /></Grid>
+                  </Button>
+                  <Button Style="{StaticResource MenuRowStyle}" Height="42" Click="History_Click">
+                    <Grid Width="200" Height="42"><Border x:Name="HubNavHistoryIndicator" Width="4" Background="{StaticResource EdgeBlueBrush}" HorizontalAlignment="Left" Visibility="Collapsed" /><FontIcon Glyph="&#xE81C;" FontFamily="Segoe MDL2 Assets" FontSize="16" Margin="17,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center" /><TextBlock Text="History" FontSize="14" Margin="50,0,8,0" VerticalAlignment="Center" /></Grid>
+                  </Button>
+                  <Button Style="{StaticResource MenuRowStyle}" Height="42" Click="Downloads_Click">
+                    <Grid Width="200" Height="42"><Border x:Name="HubNavDownloadsIndicator" Width="4" Background="{StaticResource EdgeBlueBrush}" HorizontalAlignment="Left" Visibility="Collapsed" /><FontIcon Glyph="&#xE896;" FontFamily="Segoe MDL2 Assets" FontSize="16" Margin="17,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center" /><TextBlock Text="Downloads" FontSize="14" Margin="50,0,8,0" VerticalAlignment="Center" /></Grid>
+                  </Button>
+                </StackPanel>
+              </Grid>
+            </Border>
+
+            <Grid x:Name="HubCompactTabs" Grid.Row="0" Grid.Column="1" Visibility="Collapsed" Background="{ThemeResource EdgeSurfaceBrush}" BorderBrush="{ThemeResource EdgeDividerBrush}" BorderThickness="0,0,0,1">
+              <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition /><ColumnDefinition /><ColumnDefinition /><ColumnDefinition /></Grid.ColumnDefinitions>
+              <Button Grid.Column="0" Style="{StaticResource HubTabStyle}" ToolTipService.ToolTip="Favorites" AutomationProperties.Name="Favorites" Click="Favorites_Click">
+                <Grid><Grid.RowDefinitions><RowDefinition Height="49" /><RowDefinition Height="3" /></Grid.RowDefinitions><FontIcon Grid.Row="0" Glyph="&#xE734;" FontFamily="Segoe MDL2 Assets" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center" /><Border x:Name="HubFavoritesIndicator" Grid.Row="1" Background="{StaticResource EdgeBlueBrush}" /></Grid>
+              </Button>
+              <Button Grid.Column="1" Style="{StaticResource HubTabStyle}" ToolTipService.ToolTip="Reading list" AutomationProperties.Name="Reading list" Click="ReadingList_Click">
+                <Grid><Grid.RowDefinitions><RowDefinition Height="49" /><RowDefinition Height="3" /></Grid.RowDefinitions><FontIcon Grid.Row="0" Glyph="&#xE736;" FontFamily="Segoe MDL2 Assets" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center" /><Border x:Name="HubReadingIndicator" Grid.Row="1" Background="{StaticResource EdgeBlueBrush}" Visibility="Collapsed" /></Grid>
+              </Button>
+              <Button Grid.Column="2" Style="{StaticResource HubTabStyle}" ToolTipService.ToolTip="Books" AutomationProperties.Name="Books" Click="Books_Click">
+                <Grid><Grid.RowDefinitions><RowDefinition Height="49" /><RowDefinition Height="3" /></Grid.RowDefinitions><FontIcon Grid.Row="0" Glyph="&#xE82D;" FontFamily="Segoe MDL2 Assets" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center" /><Border x:Name="HubBooksIndicator" Grid.Row="1" Background="{StaticResource EdgeBlueBrush}" Visibility="Collapsed" /></Grid>
+              </Button>
+              <Button Grid.Column="3" Style="{StaticResource HubTabStyle}" ToolTipService.ToolTip="History" AutomationProperties.Name="History" Click="History_Click">
+                <Grid><Grid.RowDefinitions><RowDefinition Height="49" /><RowDefinition Height="3" /></Grid.RowDefinitions><FontIcon Grid.Row="0" Glyph="&#xE81C;" FontFamily="Segoe MDL2 Assets" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center" /><Border x:Name="HubHistoryIndicator" Grid.Row="1" Background="{StaticResource EdgeBlueBrush}" Visibility="Collapsed" /></Grid>
+              </Button>
+              <Button Grid.Column="4" Style="{StaticResource HubTabStyle}" ToolTipService.ToolTip="Downloads" AutomationProperties.Name="Downloads" Click="Downloads_Click">
+                <Grid><Grid.RowDefinitions><RowDefinition Height="49" /><RowDefinition Height="3" /></Grid.RowDefinitions><FontIcon Grid.Row="0" Glyph="&#xE896;" FontFamily="Segoe MDL2 Assets" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center" /><Border x:Name="HubDownloadsIndicator" Grid.Row="1" Background="{StaticResource EdgeBlueBrush}" Visibility="Collapsed" /></Grid>
+              </Button>
+            </Grid>
+            <Grid Grid.Row="1" Grid.Column="1" Margin="22,0" BorderBrush="{ThemeResource EdgeDividerBrush}" BorderThickness="0,0,0,1">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+              </Grid.ColumnDefinitions>
+              <TextBlock x:Name="HubHeading" Text="Favorites" FontSize="24" FontWeight="SemiLight" VerticalAlignment="Center" />
+              <Button x:Name="HubOpenDownloadsButton" Grid.Column="1" Content="Open folder" HorizontalAlignment="Right" VerticalAlignment="Center" Background="Transparent" Foreground="{StaticResource EdgeBlueBrush}" BorderThickness="0" Padding="8,6" FontSize="14" Visibility="Collapsed" Click="DownloadOpenFolder_Click" />
+              <Border x:Name="HubDownloadHeaderDivider" Grid.Column="2" Width="1" Height="22" Margin="3,0,7,0" Background="{ThemeResource EdgeDividerBrush}" VerticalAlignment="Center" Visibility="Collapsed" />
+              <Button x:Name="HubExpandButton" Grid.Column="3" Content="&#xE76C;" Width="40" Height="40" Style="{StaticResource ChromeButtonStyle}" ToolTipService.ToolTip="Expand Hub navigation" AutomationProperties.Name="Expand Hub navigation" Visibility="Collapsed" Click="HubNavigationToggle_Click" />
+              <Button x:Name="HubPinButton" Grid.Column="4" Content="&#xE718;" Width="34" Height="40" FontFamily="Segoe MDL2 Assets" FontSize="14" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="Pin this pane" AutomationProperties.Name="Pin this pane" Click="HubPin_Click" />
+              <Button x:Name="HubCloseButton" Grid.Column="5" Content="&#xE711;" Width="40" Height="40" Style="{StaticResource ChromeButtonStyle}" ToolTipService.ToolTip="Close Hub" AutomationProperties.Name="Close Hub" Click="ClosePane_Click" />
+              <Button x:Name="HubClearButton" Grid.Column="1" Content="Clear all" HorizontalAlignment="Right" VerticalAlignment="Center" Background="Transparent" Foreground="{StaticResource EdgeBlueBrush}" BorderThickness="0" Padding="10,6" FontSize="13" Visibility="Collapsed" Click="ClearHub_Click" />
+            </Grid>
+            <Grid Grid.Row="2" Grid.Column="1">
+              <ListView x:Name="HubList" IsItemClickEnabled="True" ItemClick="HubList_ItemClick" SelectionMode="None">
+                <ListView.ItemTemplate>
+                  <DataTemplate>
+                    <Grid Padding="16,10" MinHeight="62">
+                      <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                      <Grid.ColumnDefinitions><ColumnDefinition Width="28" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                      <Image Grid.RowSpan="2" Source="{Binding IconUrl}" Width="16" Height="16" Stretch="Uniform" HorizontalAlignment="Left" VerticalAlignment="Center" />
+                      <TextBlock Grid.Column="1" Text="{Binding Title}" FontSize="15" TextTrimming="CharacterEllipsis" />
+                      <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Url}" Foreground="{ThemeResource EdgeSecondaryTextBrush}" FontSize="12" TextTrimming="CharacterEllipsis" Margin="0,3,0,0" />
+                    </Grid>
+                  </DataTemplate>
+                </ListView.ItemTemplate>
+              </ListView>
+              <ScrollViewer x:Name="DownloadsList" Visibility="Collapsed" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel>
+                  <ListView x:Name="ActiveDownloadsList" SelectionMode="None" IsItemClickEnabled="False" HorizontalContentAlignment="Stretch">
+                    <ListView.ItemContainerStyle>
+                      <Style TargetType="ListViewItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                        <Setter Property="Padding" Value="0" />
+                        <Setter Property="Margin" Value="0" />
+                        <Setter Property="IsTabStop" Value="False" />
+                      </Style>
+                    </ListView.ItemContainerStyle>
+                    <ListView.ItemTemplate>
+                      <DataTemplate>
+                        <Grid MinHeight="112" Padding="22,10,14,12" BorderBrush="{ThemeResource EdgeDividerBrush}" BorderThickness="0,0,0,1">
+                          <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="38" />
+                          </Grid.ColumnDefinitions>
+                          <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                          </Grid.RowDefinitions>
+                          <TextBlock Text="{Binding Title}" FontFamily="Segoe UI" FontSize="14" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                          <Button Grid.Column="1" Tag="{Binding}" Content="&#xE769;" Width="34" Height="34" FontSize="13" Visibility="{Binding PauseVisibility}" Style="{StaticResource ChromeButtonStyle}" ToolTipService.ToolTip="Pause" Click="DownloadPause_Click" />
+                          <Button Grid.Column="1" Tag="{Binding}" Content="&#xE768;" Width="34" Height="34" FontSize="13" Visibility="{Binding ResumeVisibility}" Style="{StaticResource ChromeButtonStyle}" ToolTipService.ToolTip="Resume" Click="DownloadResume_Click" />
+                          <TextBlock Grid.Row="1" Grid.ColumnSpan="2" Text="{Binding SourceText}" FontSize="12" Foreground="{ThemeResource EdgeSecondaryTextBrush}" TextTrimming="CharacterEllipsis" Margin="0,2,0,0" />
+                          <ProgressBar Grid.Row="2" Grid.ColumnSpan="2" Height="3" Margin="0,9,0,0" Minimum="0" Maximum="100" Value="{Binding ProgressValue}" IsIndeterminate="{Binding IsIndeterminate}" Foreground="{StaticResource EdgeBlueBrush}" />
+                          <TextBlock Grid.Row="3" Grid.ColumnSpan="2" Text="{Binding HubStatusText}" FontSize="12" Foreground="{ThemeResource EdgeSecondaryTextBrush}" TextTrimming="CharacterEllipsis" Margin="0,7,0,0" />
+                          <Button Grid.Row="4" Grid.ColumnSpan="2" Tag="{Binding}" Content="Cancel" HorizontalAlignment="Left" Background="Transparent" Foreground="{StaticResource EdgeBlueBrush}" BorderThickness="0" Padding="0,5,8,0" FontSize="13" Visibility="{Binding CancelVisibility}" Click="DownloadCancel_Click" />
+                        </Grid>
+                      </DataTemplate>
+                    </ListView.ItemTemplate>
+                  </ListView>
+
+                  <Grid x:Name="PastDownloadsHeader" Height="45" Margin="22,0,14,0" BorderBrush="{ThemeResource EdgeDividerBrush}" BorderThickness="0,0,0,1" Visibility="Collapsed">
+                    <TextBlock Text="Past downloads" FontFamily="Segoe UI" FontSize="14" VerticalAlignment="Center" />
+                    <Button Content="Clear all" HorizontalAlignment="Right" VerticalAlignment="Center" Background="Transparent" Foreground="{StaticResource EdgeBlueBrush}" BorderThickness="0" Padding="8,6" FontSize="14" Click="ClearHub_Click" />
+                  </Grid>
+
+                  <ListView x:Name="PastDownloadsList" SelectionMode="None" IsItemClickEnabled="True" ItemClick="DownloadList_ItemClick" HorizontalContentAlignment="Stretch">
+                    <ListView.ItemContainerStyle>
+                      <Style TargetType="ListViewItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                        <Setter Property="Padding" Value="0" />
+                        <Setter Property="Margin" Value="0" />
+                      </Style>
+                    </ListView.ItemContainerStyle>
+                    <ListView.ItemTemplate>
+                      <DataTemplate>
+                        <Grid MinHeight="60" Padding="22,8,12,8" BorderBrush="{ThemeResource EdgeDividerBrush}" BorderThickness="0,0,0,1">
+                          <Grid.ContextFlyout>
+                            <MenuFlyout>
+                              <MenuFlyoutItem Text="Copy link" Tag="{Binding}" Click="DownloadCopyLink_Click" />
+                              <MenuFlyoutItem Text="Show in folder" Tag="{Binding}" Click="DownloadShowInFolder_Click" />
+                              <MenuFlyoutItem Text="Report this download as unsafe" Tag="{Binding}" Click="DownloadReportUnsafe_Click" />
+                            </MenuFlyout>
+                          </Grid.ContextFlyout>
+                          <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="38" />
+                          </Grid.ColumnDefinitions>
+                          <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                          </Grid.RowDefinitions>
+                          <TextBlock Text="{Binding Title}" FontFamily="Segoe UI" FontSize="14" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                          <TextBlock Grid.Row="1" Text="{Binding SourceText}" FontSize="12" Foreground="{ThemeResource EdgeSecondaryTextBrush}" TextTrimming="CharacterEllipsis" Margin="0,2,0,0" />
+                          <Grid Grid.Row="2" Visibility="{Binding FailureVisibility}">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <TextBlock Text="{Binding StatusText}" FontSize="12" Foreground="{ThemeResource EdgeSecondaryTextBrush}" TextTrimming="CharacterEllipsis" Margin="0,3,8,0" />
+                            <Button Grid.Column="1" Tag="{Binding}" Content="Retry" Background="Transparent" Foreground="{StaticResource EdgeBlueBrush}" BorderThickness="0" Padding="4,2" FontSize="13" Visibility="{Binding RetryVisibility}" Click="DownloadRetry_Click" />
+                          </Grid>
+                          <Button Grid.Column="1" Grid.RowSpan="3" Tag="{Binding}" Content="&#xE711;" Width="34" Height="34" FontSize="12" Style="{StaticResource ChromeButtonStyle}" ToolTipService.ToolTip="Remove from list" Click="DownloadRemove_Click" />
+                        </Grid>
+                      </DataTemplate>
+                    </ListView.ItemTemplate>
+                  </ListView>
+                </StackPanel>
+              </ScrollViewer>
+              <StackPanel x:Name="HubEmptyState" HorizontalAlignment="Center" VerticalAlignment="Center" Width="280" Visibility="Collapsed">
+                <FontIcon x:Name="HubEmptyGlyph" Glyph="&#xE734;" FontFamily="Segoe MDL2 Assets" FontSize="34" Foreground="{ThemeResource EdgeTertiaryTextBrush}" HorizontalAlignment="Center" />
+                <TextBlock x:Name="HubEmptyTitle" Text="No favorites yet" FontSize="17" TextAlignment="Center" HorizontalAlignment="Stretch" Margin="0,16,0,0" />
+                <TextBlock x:Name="HubEmptyDetail" Text="Select the star in the address bar to save this page." FontSize="13" Foreground="{ThemeResource EdgeSecondaryTextBrush}" TextWrapping="Wrap" TextAlignment="Center" HorizontalAlignment="Stretch" Margin="0,7,0,0" />
+              </StackPanel>
+            </Grid>
+          </Grid>
+
+          <Grid x:Name="SettingsPanel" Background="{ThemeResource EdgeSurfaceBrush}" Visibility="Collapsed">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition x:Name="SettingsNavigationColumn" Width="190" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Border x:Name="SettingsNavigationRail" Grid.Column="0" Background="{ThemeResource EdgeRailBrush}" BorderBrush="{ThemeResource EdgeDividerBrush}" BorderThickness="0,0,1,0">
+              <Grid>
+                <Grid.RowDefinitions><RowDefinition Height="74" /><RowDefinition Height="*" /><RowDefinition Height="54" /></Grid.RowDefinitions>
+                <TextBlock Text="Settings" FontSize="24" FontWeight="SemiLight" Margin="20,0,0,0" VerticalAlignment="Center" />
+                <ScrollViewer Grid.Row="1" VerticalScrollMode="Auto" VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                  <Button x:Name="SettingsGeneralNavigation" Tag="general" Style="{StaticResource SettingsNavigationButtonStyle}" Click="SettingsSection_Click">
+                    <Grid MinWidth="0"><Border x:Name="SettingsGeneralIndicator" Width="4" Background="{StaticResource EdgeBlueBrush}" HorizontalAlignment="Left" /><TextBlock Text="General" Margin="20,0,12,0" TextWrapping="Wrap" VerticalAlignment="Center" /></Grid>
+                  </Button>
+                  <Button x:Name="SettingsPrivacyNavigation" Tag="privacy" Style="{StaticResource SettingsNavigationButtonStyle}" Click="SettingsSection_Click">
+                    <Grid MinWidth="0"><Border x:Name="SettingsPrivacyIndicator" Width="4" Background="{StaticResource EdgeBlueBrush}" HorizontalAlignment="Left" Visibility="Collapsed" /><TextBlock Text="Privacy &amp; security" Margin="20,0,12,0" TextWrapping="Wrap" VerticalAlignment="Center" /></Grid>
+                  </Button>
+                  <Button x:Name="SettingsPasswordsNavigation" Tag="passwords" Style="{StaticResource SettingsNavigationButtonStyle}" Click="SettingsSection_Click">
+                    <Grid MinWidth="0"><Border x:Name="SettingsPasswordsIndicator" Width="4" Background="{StaticResource EdgeBlueBrush}" HorizontalAlignment="Left" Visibility="Collapsed" /><TextBlock Text="Passwords &amp; autofill" Margin="20,0,12,0" TextWrapping="Wrap" VerticalAlignment="Center" /></Grid>
+                  </Button>
+                  <Button x:Name="SettingsAdvancedNavigation" Tag="advanced" Style="{StaticResource SettingsNavigationButtonStyle}" Click="SettingsSection_Click">
+                    <Grid MinWidth="0"><Border x:Name="SettingsAdvancedIndicator" Width="4" Background="{StaticResource EdgeBlueBrush}" HorizontalAlignment="Left" Visibility="Collapsed" /><TextBlock Text="Advanced" Margin="20,0,12,0" TextWrapping="Wrap" VerticalAlignment="Center" /></Grid>
+                  </Button>
+                </StackPanel>
+                </ScrollViewer>
+                <Button Grid.Row="2" Content="About Microsoft Edge" Style="{StaticResource MenuRowStyle}" FontSize="13" Padding="20,0" Click="About_Click" />
+              </Grid>
+            </Border>
+
+            <Grid Grid.Column="1" Background="{ThemeResource EdgeSurfaceBrush}">
+              <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+              </Grid.RowDefinitions>
+              <Border x:Name="SettingsCompactHeader" Grid.Row="0" Height="54" Padding="14,7,58,7" BorderBrush="{ThemeResource EdgeDividerBrush}" BorderThickness="0,0,0,1" Visibility="Collapsed">
+                <ComboBox x:Name="SettingsCompactSectionBox" HorizontalAlignment="Stretch" SelectedValuePath="Tag" SelectionChanged="SettingsCompactSectionBox_SelectionChanged" AutomationProperties.Name="Settings section">
+                  <ComboBoxItem Content="General" Tag="general" />
+                  <ComboBoxItem Content="Privacy &amp; security" Tag="privacy" />
+                  <ComboBoxItem Content="Passwords &amp; autofill" Tag="passwords" />
+                  <ComboBoxItem Content="Advanced" Tag="advanced" />
+                </ComboBox>
+              </Border>
+              <Button Grid.RowSpan="2" Content="&#xE711;" Width="52" Height="52" HorizontalAlignment="Right" VerticalAlignment="Top" Style="{StaticResource ChromeButtonStyle}" Canvas.ZIndex="20" ToolTipService.ToolTip="Close Settings" AutomationProperties.Name="Close Settings" Click="ClosePane_Click" />
+
+              <ScrollViewer x:Name="SettingsGeneralPanel" Grid.Row="1" VerticalScrollMode="Auto" VerticalScrollBarVisibility="Auto">
+                <StackPanel x:Name="SettingsGeneralContent" Padding="28,20,28,38">
+                  <TextBlock Text="General" FontSize="24" FontWeight="SemiLight" Margin="0,0,54,2" />
+                  <TextBlock Text="Customize" Style="{StaticResource SettingsSectionHeaderStyle}" />
+                  <TextBlock Text="Choose a theme" Style="{StaticResource SettingsLabelStyle}" />
+                  <ComboBox x:Name="ThemeBox" Width="220" HorizontalAlignment="Left" SelectedValuePath="Tag" SelectionChanged="ThemeBox_SelectionChanged">
+                    <ComboBoxItem Content="Light" Tag="Light" />
+                    <ComboBoxItem Content="Dark" Tag="Dark" />
+                  </ComboBox>
+                  <ToggleSwitch x:Name="FavoritesBarToggle" Header="Show the favorites bar" OnContent="On" OffContent="Off" Margin="0,18,0,0" Toggled="SettingsToggle_Toggled" />
+
+                  <Rectangle Height="1" Fill="{ThemeResource EdgeDividerBrush}" Margin="0,24,0,0" />
+                  <TextBlock Text="Startup" Style="{StaticResource SettingsSectionHeaderStyle}" />
+                  <TextBlock Text="Open Microsoft Edge with" Style="{StaticResource SettingsLabelStyle}" />
+                  <ComboBox x:Name="StartupModeBox" Width="290" HorizontalAlignment="Left" SelectedValuePath="Tag" SelectionChanged="StartupModeBox_SelectionChanged">
+                    <ComboBoxItem Content="Start page" Tag="StartPage" />
+                    <ComboBoxItem Content="New tab page" Tag="NewTabPage" />
+                    <ComboBoxItem Content="Previous pages" Tag="PreviousPages" />
+                    <ComboBoxItem Content="A specific page or pages" Tag="SpecificPage" />
+                  </ComboBox>
+                  <StackPanel x:Name="StartupSpecificPagePanel" Visibility="Collapsed">
+                    <TextBlock Text="A specific page" Style="{StaticResource SettingsLabelStyle}" Margin="0,14,0,6" />
+                    <TextBox x:Name="StartupPageBox" PlaceholderText="https://example.com" LostFocus="SettingsTextBox_LostFocus" />
+                  </StackPanel>
+                  <TextBlock Text="Open new tabs with" Style="{StaticResource SettingsLabelStyle}" Margin="0,18,0,6" />
+                  <ComboBox x:Name="NewTabModeBox" Width="290" HorizontalAlignment="Left" SelectedValuePath="Tag" SelectionChanged="NewTabModeBox_SelectionChanged">
+                    <ComboBoxItem Content="Top sites and suggested content" Tag="TopSitesAndSuggestedContent" />
+                    <ComboBoxItem Content="Top sites" Tag="TopSites" />
+                    <ComboBoxItem Content="A blank page" Tag="Blank" />
+                  </ComboBox>
+                </StackPanel>
+              </ScrollViewer>
+
+              <ScrollViewer x:Name="SettingsPrivacyPanel" Grid.Row="1" Visibility="Collapsed" VerticalScrollMode="Auto" VerticalScrollBarVisibility="Auto">
+                <StackPanel x:Name="SettingsPrivacyContent" Padding="28,20,28,38">
+                  <TextBlock Text="Privacy &amp; security" FontSize="24" FontWeight="SemiLight" Margin="0,0,54,2" />
+                  <TextBlock Text="Clear browsing data" Style="{StaticResource SettingsSectionHeaderStyle}" />
+                  <TextBlock Text="Clear history, cookies, saved website data, cached data, and files." Style="{StaticResource SettingsDescriptionStyle}" />
+                  <Button Content="Choose what to clear" HorizontalAlignment="Left" Padding="16,8" Margin="0,12,0,0" Click="ClearData_Click" />
+
+                  <Rectangle Height="1" Fill="{ThemeResource EdgeDividerBrush}" Margin="0,24,0,0" />
+                  <TextBlock Text="Privacy" Style="{StaticResource SettingsSectionHeaderStyle}" />
+                  <ToggleSwitch Header="Send Do Not Track requests" IsOn="False" IsEnabled="False" OnContent="On" OffContent="Off" />
+                  <TextBlock Text="Do Not Track is controlled by Windows for this browser engine." Style="{StaticResource SettingsDescriptionStyle}" Margin="0,5,0,12" />
+                  <ToggleSwitch x:Name="SearchSuggestionsToggle" Header="Show search and site suggestions as I type" OnContent="On" OffContent="Off" Toggled="SettingsToggle_Toggled" />
+                  <ToggleSwitch Header="Help protect me from malicious sites and downloads with Windows Defender SmartScreen" IsOn="True" IsEnabled="False" OnContent="On" OffContent="Off" Margin="0,12,0,0" />
+                  <TextBlock Text="SmartScreen behavior is controlled by Windows for the system EdgeHTML engine." Style="{StaticResource SettingsDescriptionStyle}" Margin="0,5,0,12" />
+                  <ToggleSwitch x:Name="LegacySupportNoticeToggle" Header="Show the end-of-support reminder" OnContent="On" OffContent="Off" Margin="0,8,0,0" Toggled="SettingsToggle_Toggled" />
+                </StackPanel>
+              </ScrollViewer>
+
+              <ScrollViewer x:Name="SettingsPasswordsPanel" Grid.Row="1" Visibility="Collapsed" VerticalScrollMode="Auto" VerticalScrollBarVisibility="Auto">
+                <StackPanel x:Name="SettingsPasswordsContent" Padding="28,20,28,38">
+                  <TextBlock Text="Passwords &amp; autofill" FontSize="24" FontWeight="SemiLight" Margin="0,0,54,2" />
+                  <TextBlock Text="Passwords" Style="{StaticResource SettingsSectionHeaderStyle}" />
+                  <ToggleSwitch Header="Offer to save passwords" IsOn="False" IsEnabled="False" OnContent="On" OffContent="Off" />
+                  <Button Content="Manage passwords" HorizontalAlignment="Left" Padding="16,8" Margin="0,10,0,0" IsEnabled="False" />
+                  <TextBlock Text="Saved passwords are managed by Windows and aren't available in this recreation." Style="{StaticResource SettingsDescriptionStyle}" Margin="0,8,0,0" />
+
+                  <Rectangle Height="1" Fill="{ThemeResource EdgeDividerBrush}" Margin="0,24,0,0" />
+                  <TextBlock Text="Autofill" Style="{StaticResource SettingsSectionHeaderStyle}" />
+                  <ToggleSwitch Header="Save form entries" IsOn="False" IsEnabled="False" OnContent="On" OffContent="Off" />
+                  <Button Content="Manage forms" HorizontalAlignment="Left" Padding="16,8" Margin="0,10,0,0" IsEnabled="False" />
+                  <TextBlock Text="Form autofill storage is not available through Windows.UI.Xaml.Controls.WebView." Style="{StaticResource SettingsDescriptionStyle}" Margin="0,8,0,0" />
+                </StackPanel>
+              </ScrollViewer>
+
+              <ScrollViewer x:Name="SettingsAdvancedPanel" Grid.Row="1" Visibility="Collapsed" VerticalScrollMode="Auto" VerticalScrollBarVisibility="Auto">
+                <StackPanel x:Name="SettingsAdvancedContent" Padding="28,20,28,38">
+                  <TextBlock Text="Advanced" FontSize="24" FontWeight="SemiLight" Margin="0,0,54,2" />
+                  <TextBlock Text="Home button" Style="{StaticResource SettingsSectionHeaderStyle}" />
+                  <ToggleSwitch x:Name="ShowHomeButtonToggle" Header="Show the home button" OnContent="On" OffContent="Off" Toggled="SettingsToggle_Toggled" />
+                  <TextBlock Text="Home page" Style="{StaticResource SettingsLabelStyle}" Margin="0,14,0,6" />
+                  <TextBox x:Name="HomePageBox" PlaceholderText="https://example.com" LostFocus="SettingsTextBox_LostFocus" />
+
+                  <Rectangle Height="1" Fill="{ThemeResource EdgeDividerBrush}" Margin="0,24,0,0" />
+                  <TextBlock Text="Address bar search" Style="{StaticResource SettingsSectionHeaderStyle}" />
+                  <TextBlock Text="Search in the address bar with" Style="{StaticResource SettingsLabelStyle}" />
+                  <ComboBox x:Name="SearchProviderBox" Width="290" HorizontalAlignment="Left" SelectedValuePath="Tag" SelectionChanged="SearchProviderBox_SelectionChanged">
+                    <ComboBoxItem Content="Bing" Tag="Bing" />
+                    <ComboBoxItem Content="Google" Tag="Google" />
+                    <ComboBoxItem Content="DuckDuckGo" Tag="DuckDuckGo" />
+                    <ComboBoxItem Content="Custom" Tag="Custom" />
+                  </ComboBox>
+                  <StackPanel x:Name="CustomSearchProviderPanel" Visibility="Collapsed">
+                    <TextBlock Text="Search URL" Style="{StaticResource SettingsLabelStyle}" Margin="0,14,0,6" />
+                    <TextBox x:Name="SearchTemplateBox" PlaceholderText="https://www.bing.com/search?q={0}" LostFocus="SettingsTextBox_LostFocus" />
+                    <TextBlock Text="Use {0} where the search terms should go." Style="{StaticResource SettingsDescriptionStyle}" Margin="0,5,0,0" />
+                  </StackPanel>
+
+                  <Rectangle Height="1" Fill="{ThemeResource EdgeDividerBrush}" Margin="0,24,0,0" />
+                  <TextBlock Text="Downloads" Style="{StaticResource SettingsSectionHeaderStyle}" />
+                  <ToggleSwitch x:Name="AskDownloadToggle" Header="Ask me what to do with each download" OnContent="On" OffContent="Off" Toggled="SettingsToggle_Toggled" />
+                  <TextBlock Text="When this is off, files are saved automatically in Downloads." Style="{StaticResource SettingsDescriptionStyle}" Margin="0,5,0,0" />
+
+                  <TextBlock Text="Proxy setup" Style="{StaticResource SettingsSectionHeaderStyle}" />
+                  <Button Content="Open proxy settings" HorizontalAlignment="Left" Padding="16,8" Click="OpenProxySettings_Click" />
+                </StackPanel>
+              </ScrollViewer>
+            </Grid>
+          </Grid>
+        </Grid>
+      </Border>
+    </Popup>
+
+    <!-- Final Legacy Edge end-of-support infobar. Popup keeps it above the windowed EdgeHTML surface. -->
+    <Popup x:Name="LegacySupportPopup" IsLightDismissEnabled="False">
+      <Border x:Name="LegacySupportBorder" MinHeight="80" Background="{ThemeResource EdgeSupportBackgroundBrush}" BorderBrush="#0078D7" BorderThickness="2" Padding="46,0,14,0" SizeChanged="BottomNotification_SizeChanged">
+        <Grid x:Name="LegacySupportLayout">
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition x:Name="LegacySupportActionsRow" Height="0" />
+          </Grid.RowDefinitions>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition x:Name="LegacySupportDownloadColumn" Width="150" />
+            <ColumnDefinition x:Name="LegacySupportNotNowColumn" Width="150" />
+            <ColumnDefinition x:Name="LegacySupportCloseColumn" Width="50" />
+          </Grid.ColumnDefinitions>
+          <TextBlock x:Name="LegacySupportText" Grid.Column="0" FontSize="15" Foreground="{ThemeResource EdgeTextBrush}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,18,0">
+            <Run Text="This version of Microsoft Edge is no longer supported or receiving security updates." />
+            <LineBreak />
+            <Run Text="Download the new version of Microsoft Edge today." />
+          </TextBlock>
+          <Button x:Name="LegacySupportDownloadButton" Grid.Column="1" MinHeight="42" Margin="0,0,6,0" Background="#0078D7" Foreground="White" BorderBrush="#0078D7" FontSize="15" Click="DownloadModernEdge_Click"><TextBlock Text="Download now" TextWrapping="Wrap" TextAlignment="Center" /></Button>
+          <Button x:Name="LegacySupportNotNowButton" Grid.Column="2" MinHeight="42" Margin="0,0,6,0" Background="{ThemeResource EdgeSubtleSurfaceBrush}" BorderBrush="{ThemeResource EdgeBorderBrush}" Foreground="{ThemeResource EdgeTextBrush}" FontSize="15" Click="DismissLegacySupport_Click"><TextBlock Text="Not now" TextWrapping="Wrap" TextAlignment="Center" /></Button>
+          <Button x:Name="LegacySupportCloseButton" Grid.Column="3" Content="&#xE711;" Width="44" Height="44" HorizontalAlignment="Right" Style="{StaticResource ChromeButtonStyle}" ToolTipService.ToolTip="Dismiss" AutomationProperties.Name="Dismiss support notice" Click="DismissLegacySupport_Click" />
+        </Grid>
+      </Border>
+    </Popup>
+  </Grid>
+</Page>
