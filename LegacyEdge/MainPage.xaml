@@ -2,6 +2,7 @@
     x:Class="LegacyEdge.MainPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:primitives="using:Windows.UI.Xaml.Controls.Primitives"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
@@ -426,7 +427,16 @@
     </Border>
 
     <Grid x:Name="ContentArea" Grid.Row="5" Background="{ThemeResource EdgeElevatedSurfaceBrush}">
-      <Grid x:Name="BrowserHost" Background="{ThemeResource EdgeElevatedSurfaceBrush}" />
+      <Grid x:Name="BrowserSurface">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition x:Name="PageScrollBarColumn" Width="0" />
+        </Grid.ColumnDefinitions>
+        <Grid x:Name="BrowserViewport" Grid.Column="0" SizeChanged="BrowserViewport_SizeChanged">
+          <Grid x:Name="BrowserHost" Background="{ThemeResource EdgeElevatedSurfaceBrush}" />
+        </Grid>
+        <primitives:ScrollBar x:Name="PageScrollBar" Grid.Column="1" Width="16" Orientation="Vertical" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Visibility="Collapsed" IndicatorMode="MouseIndicator" Background="{ThemeResource ScrollBarTrackFill}" SmallChange="40" Scroll="PageScrollBar_Scroll" PointerWheelChanged="PageScrollBar_PointerWheelChanged" AutomationProperties.Name="Page scroll bar" />
+      </Grid>
 
       <Grid x:Name="PdfSurface" Background="#555555" Visibility="Collapsed" SizeChanged="PdfSurface_SizeChanged">
         <ScrollViewer x:Name="PdfScrollViewer" HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto" VerticalScrollMode="Auto" VerticalScrollBarVisibility="Auto" ZoomMode="Disabled" ViewChanged="PdfScrollViewer_ViewChanged">

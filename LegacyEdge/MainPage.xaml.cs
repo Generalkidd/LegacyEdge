@@ -44,6 +44,8 @@ namespace LegacyEdge
 {
     public sealed partial class MainPage : Page
     {
+        private const double PageScrollBarWidth = 16;
+
         private sealed class WindowLaunchOptions
         {
             public string Address { get; set; }
@@ -196,6 +198,15 @@ namespace LegacyEdge
         private string _contextSelectedText;
         private bool _contextIsEditable;
         private bool _contextPollBusy;
+        private bool _pageScrollBarUpdating;
+        private bool _pageScrollBarThumbTracking;
+        private bool _pageScrollRequestBusy;
+        private bool _pageScrollRequestPending;
+        private double _pageScrollRequestValue;
+        private BrowserTab _pageScrollRequestTab;
+        private WebView _pageScrollRequestView;
+        private int _pageScrollRequestViewGeneration;
+        private int _pageScrollRequestNavigationGeneration;
         private bool _recoveringWebViewProcess;
         private readonly DispatcherTimer _contextPollTimer;
         private readonly int _viewId;
@@ -253,7 +264,7 @@ namespace LegacyEdge
             ApplicationView.GetForCurrentView().SetPreferredMinSize(new Size(500, 320));
 
             NoteCanvas.InkPresenter.InputDeviceTypes = CoreInputDeviceTypes.Pen | CoreInputDeviceTypes.Mouse | CoreInputDeviceTypes.Touch;
-            _contextPollTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(300) };
+            _contextPollTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
             _contextPollTimer.Tick += ContextPollTimer_Tick;
             _tabDragAutoScrollTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(30) };
             _tabDragAutoScrollTimer.Tick += TabDragAutoScrollTimer_Tick;
@@ -286,6 +297,7 @@ namespace LegacyEdge
                 tab.View.RequestedTheme = elementTheme;
                 tab.View.DefaultBackgroundColor = webViewBackground;
             }
+            PageScrollBar.RequestedTheme = elementTheme;
 
             if (_currentTab != null) UpdateChrome();
             RebuildTabs();
@@ -701,6 +713,7 @@ namespace LegacyEdge
             }
             var previousTab = _currentTab;
             var changedTab = !ReferenceEquals(previousTab, tab);
+            if (changedTab) CancelPageScrollInteraction();
             var clearFindBeforeReveal = changedTab && !tab.IsPdfView &&
                 FindBar.Visibility != Visibility.Visible && _findHighlightedTabs.Contains(tab) &&
                 string.IsNullOrWhiteSpace(tab.PendingAddress);
@@ -738,6 +751,7 @@ namespace LegacyEdge
             }
 
             if (tab.IsPdfView) ShowPdfTab(tab); else HidePdfSurface();
+            ApplyCachedPageScrollMetrics(tab);
 
             UpdateChrome();
             RebuildTabs();
@@ -1530,6 +1544,8 @@ namespace LegacyEdge
             tab.PreviewImage = null;
             tab.IsLoading = true;
             tab.LastNavigationSucceeded = false;
+            tab.HasPageScrollMetrics = false;
+            tab.PageScrollBarVisible = false;
             _findHighlightedTabs.Remove(tab);
             if (tab == _currentTab && FindBar.Visibility == Visibility.Visible)
             {
@@ -1563,7 +1579,12 @@ namespace LegacyEdge
                 tab.Address = nextAddress;
             }
             UpdateSessionSnapshot();
-            if (tab == _currentTab) UpdateChrome();
+            if (tab == _currentTab)
+            {
+                CancelPageScrollInteraction();
+                HidePageScrollBar();
+                UpdateChrome();
+            }
             RebuildTabs();
             if (TabPreviewBar.Visibility == Visibility.Visible) RebuildTabPreviewCards(true);
         }
@@ -1594,6 +1615,12 @@ namespace LegacyEdge
             else
             {
                 tab.Title = "Page unavailable";
+                tab.HasPageScrollMetrics = true;
+                tab.PageScrollBarVisible = false;
+                tab.PageScrollMaximum = 0;
+                tab.PageScrollViewport = 0;
+                tab.PageScrollOffset = 0;
+                if (tab == _currentTab) HidePageScrollBar();
                 ShowTransientStatus("This page could not be loaded: " + args.WebErrorStatus);
             }
 
@@ -1709,8 +1736,18 @@ namespace LegacyEdge
 
         private void WebView_ContainsFullScreenElementChanged(WebView sender, object args)
         {
-            if (FindTab(sender) != _currentTab) return;
-            if (sender.ContainsFullScreenElement) EnterFullScreen(); else ExitFullScreen();
+            var tab = FindTab(sender);
+            if (tab != _currentTab) return;
+            if (sender.ContainsFullScreenElement)
+            {
+                HidePageScrollBar();
+                EnterFullScreen();
+            }
+            else
+            {
+                ExitFullScreen();
+                ApplyCachedPageScrollMetrics(tab);
+            }
         }
 
         private async void WebView_LongRunningScriptDetected(WebView sender, WebViewLongRunningScriptDetectedEventArgs args)
@@ -1738,24 +1775,201 @@ namespace LegacyEdge
             catch { }
         }
 
+        private void BrowserViewport_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            BrowserViewport.Clip = new RectangleGeometry
+            {
+                Rect = new Rect(0, 0, Math.Max(0, e.NewSize.Width), Math.Max(0, e.NewSize.Height))
+            };
+            if (PageScrollBar.Visibility == Visibility.Visible)
+                SizeBrowserHostForPageScrollBar();
+        }
+
+        private void SizeBrowserHostForPageScrollBar()
+        {
+            if (BrowserSurface.ActualWidth <= 0) return;
+            if (BrowserHost.HorizontalAlignment != HorizontalAlignment.Left)
+                BrowserHost.HorizontalAlignment = HorizontalAlignment.Left;
+            if (double.IsNaN(BrowserHost.Width) || Math.Abs(BrowserHost.Width - BrowserSurface.ActualWidth) > 0.5)
+                BrowserHost.Width = BrowserSurface.ActualWidth;
+        }
+
+        private void ApplyPageScrollMetrics(BrowserTab tab, bool scrollBarVisible, double maximum, double viewport, double offset)
+        {
+            if (tab == null) return;
+            maximum = Math.Max(0, maximum);
+            viewport = Math.Max(0, viewport);
+            offset = Math.Max(0, Math.Min(maximum, offset));
+            tab.HasPageScrollMetrics = true;
+            tab.PageScrollBarVisible = scrollBarVisible;
+            tab.PageScrollMaximum = maximum;
+            tab.PageScrollViewport = viewport;
+            tab.PageScrollOffset = offset;
+
+            var view = tab.View;
+            if (tab != _currentTab || tab.IsPdfView || view == null || view.Visibility != Visibility.Visible ||
+                !BrowserHost.Children.Contains(view)) return;
+            if (view.ContainsFullScreenElement)
+            {
+                HidePageScrollBar();
+                return;
+            }
+
+            _pageScrollBarUpdating = true;
+            try
+            {
+                if (!scrollBarVisible || viewport < 1)
+                {
+                    HidePageScrollBar();
+                    return;
+                }
+
+                if (PageScrollBar.Visibility != Visibility.Visible)
+                {
+                    PageScrollBarColumn.Width = new GridLength(PageScrollBarWidth);
+                    PageScrollBar.Visibility = Visibility.Visible;
+                }
+                PageScrollBar.IsEnabled = maximum >= 1;
+                if (PageScrollBar.Minimum != 0) PageScrollBar.Minimum = 0;
+                if (Math.Abs(PageScrollBar.Maximum - maximum) > 0.5) PageScrollBar.Maximum = maximum;
+                if (Math.Abs(PageScrollBar.ViewportSize - viewport) > 0.5) PageScrollBar.ViewportSize = viewport;
+                var largeChange = Math.Max(40, viewport * 0.9);
+                if (Math.Abs(PageScrollBar.LargeChange - largeChange) > 0.5) PageScrollBar.LargeChange = largeChange;
+                if (!_pageScrollBarThumbTracking && !_pageScrollRequestBusy && Math.Abs(PageScrollBar.Value - offset) > 0.5)
+                    PageScrollBar.Value = offset;
+                SizeBrowserHostForPageScrollBar();
+            }
+            finally { _pageScrollBarUpdating = false; }
+        }
+
+        private void HidePageScrollBar()
+        {
+            CancelPageScrollInteraction();
+            if (PageScrollBar.Visibility != Visibility.Visible && PageScrollBarColumn.Width.Value == 0 &&
+                double.IsNaN(BrowserHost.Width)) return;
+            PageScrollBar.Visibility = Visibility.Collapsed;
+            PageScrollBarColumn.Width = new GridLength(0);
+            BrowserHost.ClearValue(FrameworkElement.WidthProperty);
+            BrowserHost.HorizontalAlignment = HorizontalAlignment.Stretch;
+        }
+
+        private void ApplyCachedPageScrollMetrics(BrowserTab tab)
+        {
+            if (tab?.IsPdfView == false && tab.View?.Visibility == Visibility.Visible && tab.HasPageScrollMetrics)
+            {
+                ApplyPageScrollMetrics(tab, tab.PageScrollBarVisible, tab.PageScrollMaximum, tab.PageScrollViewport, tab.PageScrollOffset);
+                return;
+            }
+
+            HidePageScrollBar();
+        }
+
+        private void PageScrollBar_Scroll(object sender, Windows.UI.Xaml.Controls.Primitives.ScrollEventArgs e)
+        {
+            if (_pageScrollBarUpdating) return;
+            _pageScrollBarThumbTracking = e.ScrollEventType == Windows.UI.Xaml.Controls.Primitives.ScrollEventType.ThumbTrack;
+            QueuePageScrollRequest(e.NewValue);
+        }
+
+        private void PageScrollBar_PointerWheelChanged(object sender, PointerRoutedEventArgs e)
+        {
+            var delta = e.GetCurrentPoint(PageScrollBar).Properties.MouseWheelDelta;
+            if (delta == 0 || PageScrollBar.Visibility != Visibility.Visible) return;
+            var notches = delta / 120d;
+            var target = Math.Max(PageScrollBar.Minimum,
+                Math.Min(PageScrollBar.Maximum, PageScrollBar.Value - notches * PageScrollBar.SmallChange * 3));
+            PageScrollBar.Value = target;
+            QueuePageScrollRequest(target);
+            e.Handled = true;
+        }
+
+        private void QueuePageScrollRequest(double value)
+        {
+            var tab = _currentTab;
+            var view = tab?.View;
+            if (tab == null || view == null || tab.IsPdfView || tab.IsLoading ||
+                view.Visibility != Visibility.Visible || !BrowserHost.Children.Contains(view)) return;
+            _pageScrollRequestValue = Math.Max(PageScrollBar.Minimum, Math.Min(PageScrollBar.Maximum, value));
+            _pageScrollRequestTab = tab;
+            _pageScrollRequestView = view;
+            _pageScrollRequestViewGeneration = tab.ViewGeneration;
+            _pageScrollRequestNavigationGeneration = tab.NavigationGeneration;
+            _pageScrollRequestPending = true;
+            if (!_pageScrollRequestBusy) _ = FlushPageScrollRequestsAsync();
+        }
+
+        private void CancelPageScrollInteraction()
+        {
+            _pageScrollBarThumbTracking = false;
+            _pageScrollRequestPending = false;
+            _pageScrollRequestTab = null;
+            _pageScrollRequestView = null;
+            _pageScrollRequestViewGeneration = 0;
+            _pageScrollRequestNavigationGeneration = 0;
+        }
+
+        private async Task FlushPageScrollRequestsAsync()
+        {
+            if (_pageScrollRequestBusy) return;
+            _pageScrollRequestBusy = true;
+            try
+            {
+                while (_pageScrollRequestPending)
+                {
+                    _pageScrollRequestPending = false;
+                    var target = _pageScrollRequestValue;
+                    var tab = _pageScrollRequestTab;
+                    var view = _pageScrollRequestView;
+                    var viewGeneration = _pageScrollRequestViewGeneration;
+                    var navigationGeneration = _pageScrollRequestNavigationGeneration;
+                    if (tab == null || view == null || tab != _currentTab || tab.IsPdfView || tab.IsLoading ||
+                        !IsLiveWebView(tab, view, viewGeneration) || tab.NavigationGeneration != navigationGeneration ||
+                        view.Visibility != Visibility.Visible || !BrowserHost.Children.Contains(view)) continue;
+                    var script = "window.scrollTo(window.pageXOffset||0," + target.ToString(System.Globalization.CultureInfo.InvariantCulture) + "); 'ok'";
+                    try { await view.InvokeScriptAsync("eval", new[] { script }); }
+                    catch { continue; }
+                    if (!IsLiveWebView(tab, view, viewGeneration) || tab != _currentTab ||
+                        tab.NavigationGeneration != navigationGeneration) continue;
+                    tab.PageScrollOffset = target;
+                }
+            }
+            finally
+            {
+                _pageScrollRequestBusy = false;
+                if (_pageScrollRequestPending) _ = FlushPageScrollRequestsAsync();
+            }
+        }
+
         private async void ContextPollTimer_Tick(object sender, object e)
         {
             var tab = _currentTab;
-            if (_contextPollBusy || tab?.View == null || tab.IsLoading || tab.View.Visibility != Visibility.Visible) return;
+            if (_contextPollBusy || tab?.View == null || tab.IsLoading || tab.View.Visibility != Visibility.Visible ||
+                !BrowserHost.Children.Contains(tab.View)) return;
             var view = tab.View;
             var viewGeneration = tab.ViewGeneration;
+            var navigationGeneration = tab.NavigationGeneration;
             _contextPollBusy = true;
             try
             {
-                const string pollScript = "(function(){if(typeof window.__legacyEdgeContextData==='undefined')return '__missing__';var d=window.__legacyEdgeContextData||'';window.__legacyEdgeContextData='';return d;})()";
+                const string pollScript = "(function(){var de=document.documentElement,b=document.body,v=Math.max(0,window.innerHeight||(de?de.clientHeight:0)||(b?b.clientHeight:0)||0),h=Math.max(de?de.scrollHeight||0:0,de?de.offsetHeight||0:0,de?de.clientHeight||0:0,b?b.scrollHeight||0:0,b?b.offsetHeight||0:0,b?b.clientHeight||0:0),y=typeof window.pageYOffset==='number'?window.pageYOffset:((de?de.scrollTop:0)||(b?b.scrollTop:0)||0),style=window.getComputedStyle,rs=style&&de?style(de):null,bs=style&&b?style(b):null,ro=rs?(rs.overflowY||rs.overflow||''):'',bo=bs?(bs.overflowY||bs.overflow||''):'',rms=rs?(rs.msOverflowStyle||(rs.getPropertyValue?rs.getPropertyValue('-ms-overflow-style'):'')||''):'',bms=bs?(bs.msOverflowStyle||(bs.getPropertyValue?bs.getPropertyValue('-ms-overflow-style'):'')||''):'',hidden=ro==='hidden'||ro==='clip'||bo==='hidden'||bo==='clip'||rms==='none'||bms==='none',forced=ro==='scroll'||bo==='scroll',maximum=hidden?0:Math.max(0,h-v),missing=typeof window.__legacyEdgeContextData==='undefined',d=missing?'':(window.__legacyEdgeContextData||'');if(!missing)window.__legacyEdgeContextData='';return JSON.stringify({missing:missing,context:d,scrollBarVisible:!hidden&&(maximum>=1||forced),scrollMaximum:maximum,scrollViewport:v,scrollOffset:Math.max(0,y)});})()";
                 var raw = await view.InvokeScriptAsync("eval", new[] { pollScript });
-                if (!IsLiveWebView(tab, view, viewGeneration) || tab != _currentTab) return;
-                if (string.Equals(raw, "__missing__", StringComparison.Ordinal))
+                if (!IsLiveWebView(tab, view, viewGeneration) || tab != _currentTab ||
+                    tab.NavigationGeneration != navigationGeneration) return;
+                if (string.IsNullOrWhiteSpace(raw) || !JsonObject.TryParse(raw, out JsonObject envelope)) return;
+
+                ApplyPageScrollMetrics(tab,
+                    envelope.GetNamedBoolean("scrollBarVisible", false),
+                    envelope.GetNamedNumber("scrollMaximum", 0),
+                    envelope.GetNamedNumber("scrollViewport", 0),
+                    envelope.GetNamedNumber("scrollOffset", 0));
+
+                if (envelope.GetNamedBoolean("missing", false))
                 {
                     await InstallPageContextHookAsync(view);
                     return;
                 }
-                if (string.IsNullOrWhiteSpace(raw) || !JsonObject.TryParse(raw, out JsonObject context)) return;
+                var contextRaw = envelope.GetNamedString("context", string.Empty);
+                if (string.IsNullOrWhiteSpace(contextRaw) || !JsonObject.TryParse(contextRaw, out JsonObject context)) return;
 
                 _contextTab = tab;
                 _contextLinkUrl = context.GetNamedString("link", string.Empty);
@@ -4300,7 +4514,10 @@ namespace LegacyEdge
             {
                 if (tab == _currentTab && IsLiveWebView(tab, view, viewGeneration) &&
                     BrowserHost.Children.Contains(view))
+                {
                     view.Visibility = Visibility.Visible;
+                    ApplyCachedPageScrollMetrics(tab);
+                }
             }
         }
 
@@ -6800,7 +7017,103 @@ namespace LegacyEdge
                 "</head><body><main><h1>Light scrollbar test</h1><p>The document scrollbar should use the light browser theme.</p></main></body></html>");
             for (var attempt = 0; attempt < 40 && (tab.IsLoading || !tab.LastNavigationSucceeded); attempt++)
                 await Task.Delay(100);
-            await CaptureDebugWebViewAsync(tab.View, "webview-scrollbar-light-qa.png");
+            await Task.Delay(350);
+            try { await CaptureDebugWebViewAsync(tab.View, "webview-scrollbar-light-qa.png"); }
+            catch { }
+
+            var failures = new List<string>();
+            var lightVisible = PageScrollBar.Visibility == Visibility.Visible &&
+                Math.Abs(PageScrollBarColumn.ActualWidth - PageScrollBarWidth) < 0.5 &&
+                Math.Abs(BrowserHost.ActualWidth - BrowserSurface.ActualWidth) < 0.5;
+            if (!lightVisible) failures.Add("the app-owned page scrollbar was not laid out at 16 DIPs");
+            if (PageScrollBar.ActualTheme != ElementTheme.Light) failures.Add("the page scrollbar did not receive the light theme");
+
+            string domState = null;
+            try
+            {
+                domState = await tab.View.InvokeScriptAsync("eval", new[]
+                {
+                    "(function(){return [!!document.getElementById('__legacyEdgeScrollbar'),document.documentElement.style.msOverflowStyle||'',document.body.style.msOverflowStyle||''].join('|');})()"
+                });
+            }
+            catch { }
+            if (!string.Equals(domState, "false||", StringComparison.Ordinal))
+                failures.Add("the host scrollbar altered the page DOM or overflow style");
+
+            QueuePageScrollRequest(420);
+            for (var attempt = 0; attempt < 40 && (_pageScrollRequestBusy || _pageScrollRequestPending); attempt++)
+                await Task.Delay(25);
+            await Task.Delay(250);
+            double scrollOffset = -1;
+            try
+            {
+                var value = await tab.View.InvokeScriptAsync("eval", new[] { "String(Math.round(window.pageYOffset||0))" });
+                double.TryParse(value, System.Globalization.NumberStyles.Float,
+                    System.Globalization.CultureInfo.InvariantCulture, out scrollOffset);
+            }
+            catch { }
+            if (Math.Abs(scrollOffset - 420) > 2) failures.Add("scrollbar input did not move the EdgeHTML document");
+
+            try
+            {
+                await tab.View.InvokeScriptAsync("eval", new[] { "document.documentElement.style.overflowY='hidden'; 'ok'" });
+                await Task.Delay(250);
+                if (PageScrollBar.Visibility != Visibility.Collapsed) failures.Add("overflow-y hidden still showed a host scrollbar");
+                await tab.View.InvokeScriptAsync("eval", new[] { "document.documentElement.style.overflowY=''; 'ok'" });
+                await Task.Delay(250);
+                if (PageScrollBar.Visibility != Visibility.Visible) failures.Add("the host scrollbar did not return after overflow was restored");
+
+                await tab.View.InvokeScriptAsync("eval", new[] { "document.documentElement.style.msOverflowStyle='none'; 'ok'" });
+                await Task.Delay(250);
+                if (PageScrollBar.Visibility != Visibility.Collapsed) failures.Add("-ms-overflow-style none still showed a host scrollbar");
+                await tab.View.InvokeScriptAsync("eval", new[] { "document.documentElement.style.msOverflowStyle=''; 'ok'" });
+                await Task.Delay(250);
+
+                await tab.View.InvokeScriptAsync("eval", new[] { "document.querySelector('main').style.height='100px';document.documentElement.style.overflowY='scroll';window.scrollTo(0,0);'ok'" });
+                await Task.Delay(250);
+                if (PageScrollBar.Visibility != Visibility.Visible || PageScrollBar.IsEnabled)
+                    failures.Add("a forced overflow-y scrollbar was not represented as a disabled host rail");
+                await tab.View.InvokeScriptAsync("eval", new[] { "document.querySelector('main').style.height='2600px';document.documentElement.style.overflowY='';'ok'" });
+                await Task.Delay(250);
+            }
+            catch { failures.Add("overflow visibility check could not run"); }
+
+            tab.ZoomPercent = 200;
+            await ApplyZoomAsync(tab, tab.View);
+            await Task.Delay(250);
+            if (Math.Abs(PageScrollBar.ActualWidth - PageScrollBarWidth) > 0.5)
+                failures.Add("page zoom changed the host scrollbar width");
+            tab.ZoomPercent = 100;
+            await ApplyZoomAsync(tab, tab.View);
+
+            BrowserDataStore.AppTheme = "Dark";
+            ApplyTheme(false);
+            await Task.Delay(150);
+            if (PageScrollBar.ActualTheme != ElementTheme.Dark) failures.Add("the page scrollbar did not receive the dark theme");
+            try { await CaptureDebugElementAsync(BrowserSurface, "webview-scrollbar-surface-dark-qa.png"); }
+            catch { }
+            BrowserDataStore.AppTheme = "Light";
+            ApplyTheme(false);
+            await Task.Delay(150);
+            try { await CaptureDebugElementAsync(BrowserSurface, "webview-scrollbar-surface-light-qa.png"); }
+            catch { }
+
+            var report = (failures.Count == 0 ? "PASS" : "FAIL") + Environment.NewLine +
+                "Light layout: " + lightVisible + Environment.NewLine +
+                "DOM untouched: " + string.Equals(domState, "false||", StringComparison.Ordinal) + Environment.NewLine +
+                "Scroll offset: " + scrollOffset + Environment.NewLine +
+                "Rail width: " + PageScrollBar.ActualWidth + Environment.NewLine +
+                "Rail visibility: " + PageScrollBar.Visibility + Environment.NewLine +
+                "Rail column: " + PageScrollBarColumn.ActualWidth + Environment.NewLine +
+                "Browser host: " + BrowserHost.ActualWidth + Environment.NewLine +
+                "Browser viewport: " + BrowserViewport.ActualWidth + Environment.NewLine +
+                "Browser surface: " + BrowserSurface.ActualWidth + Environment.NewLine +
+                "Maximum: " + PageScrollBar.Maximum + Environment.NewLine +
+                "Viewport: " + PageScrollBar.ViewportSize + Environment.NewLine +
+                (failures.Count == 0 ? "All page scrollbar checks passed." : string.Join(Environment.NewLine, failures));
+            var reportFile = await ApplicationData.Current.LocalFolder.CreateFileAsync("webview-scrollbar-qa.txt", CreationCollisionOption.ReplaceExisting);
+            await FileIO.WriteTextAsync(reportFile, report);
+            ShowTransientStatus(failures.Count == 0 ? "Page scrollbar QA passed." : "Page scrollbar QA failed: " + failures[0]);
         }
 
         private void RunDebugTabOrderStress()

@@ -44,5 +44,10 @@ namespace LegacyEdge.Models
         public int PdfLoadGeneration { get; set; }
         public bool PdfReturnNeedsReload { get; set; }
         public double ZoomPercent { get; set; } = 100;
+        public bool HasPageScrollMetrics { get; set; }
+        public bool PageScrollBarVisible { get; set; }
+        public double PageScrollMaximum { get; set; }
+        public double PageScrollViewport { get; set; }
+        public double PageScrollOffset { get; set; }
     }
 }
